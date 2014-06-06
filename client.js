@@ -14,6 +14,10 @@ exports.run = function(address, port, name) {
             console.log("Disconnected from the server.");
             process.exit(0);
         });
+
+        socket.on("state", function(data) {
+            console.log(data);
+        });
     });
 
     // Handle connection errors
