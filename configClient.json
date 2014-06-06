@@ -1,0 +1,6 @@
+{
+    "address": "http://localhost",
+    "port": 3000,
+    "judge": false,
+    "name": "Client_1"
+}

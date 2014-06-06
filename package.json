@@ -1,0 +1,9 @@
+{
+    "name": "Hack-a-Node",
+    "version": "0.0.0",
+    "dependencies": {
+        "socket.io": "*",
+        "socket.io-client": "*",
+        "express": "*"
+    }
+}
