@@ -2,6 +2,10 @@
 
 var TIMEOUT = 5000;
 
+// World size as tiles (not pixels)
+var HEIGHT = 30;
+var WIDTH = 60;
+
 function Player(name, socket, connected) {
     this.name = name;
     this.socket = socket;
@@ -17,6 +21,43 @@ var currentTurn = 0;
 
 var timeoutTimer = null;
 
+var world = null;
+
+// Constructor for World object
+//
+// Initial list of basic characters that can be used demonstrating the world,
+// before graphics library is taken into use:
+//
+//  - '#': Block
+//  - ' ': Open space
+//  - 'X': Wall
+//  - 'O': Bomb
+//  - '?': Pickup
+//  - '!': Enemy
+//  - <n>: Player <n>
+//
+//  TODO: This is only an initial world state for easy textual visualization.
+//  To be designed and developped further to support real functionality,
+//  e.g. bombs need timers, players need names and pickup items need details
+
+function World(width, height) {
+    this.width = width;
+    this.height = height;
+    console.log("Creating world with " + width + "x" + height + " tiles");
+
+    this.state = new Array(height);
+    for (var i = 0; i < height; i++) {
+        this.state[i] = new Array(width);
+        for (var j = 0; j < width; j++) {
+            // Initialize the world with borders
+            if (i === 0 || j === 0 || i === height - 1 || j === width - 1) {
+                this.state[i][j] = "#";
+            } else {
+                this.state[i][j] = " ";
+            }
+        }
+    }
+}
 
 exports.run = function(port) {
     var express = require("express");
@@ -30,6 +71,9 @@ exports.run = function(port) {
 
     socketio.set("log level", 1);
     socketio.on("connection", onConnection);
+
+    // Create a new world
+    world = new World(WIDTH, HEIGHT);
 };
 
 function onConnection(socket) {
@@ -61,6 +105,15 @@ function onConnection(socket) {
 
         if (timeoutTimer === null) {
             nextTurn();
+        } else {
+            // Tell the world state with null turn,
+            // if not yet the turn of the (re)connected player
+            var state = {
+                "turn": null,
+                "world": world.state
+            }
+            player.socket.emit("state", state);
+
         }
     });
 
@@ -82,6 +135,7 @@ function onConnection(socket) {
             // Ignore wrong responses
             console.log("Player " + player.name + " sent a response at a wrong turn.");
         }
+
     });
 
     // Client has disconnected
@@ -120,8 +174,14 @@ function nextTurn() {
         console.log("\nTurn " + currentTurn);
         console.log("Queue: " + playerQueue);
 
+        // State contains the current turn and current world
+        var state = {
+            "turn": currentTurn,
+            "world": world.state
+        };
+
         // Emit the current world state
-        currentPlayer.socket.emit("state", { "turn": currentTurn });
+        currentPlayer.socket.emit("state", state);
 
         // Move this player to the back of the queue
         playerQueue.moveFirstToBack();

@@ -16,6 +16,17 @@ exports.run = function(address, port, name) {
         });
 
         socket.on("state", function(data) {
+            if (data && data.world) {
+                // Print the received world for debugging purposes
+                console.log("World:");
+                for (var i = 0; i < data.world.length; i++) {
+                    var line = "    ";
+                    for (var j = 0; j < data.world[i].length; j++) {
+                        line += data.world[i][j];
+                    }
+                    console.log(line);
+                }
+            }
             if (data && data.turn) {
                 console.log("Turn: " + data.turn);
 
@@ -32,6 +43,10 @@ exports.run = function(address, port, name) {
                 } else {
                     console.log("Not sending a response (turn " + data.turn + ").");
                 }
+            } else {
+                // If initial world (at connection time) is received and it is someone else's turn,
+                // data.turn === null
+                console.log("Not my turn");
             }
         });
     });
