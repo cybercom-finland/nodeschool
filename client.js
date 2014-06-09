@@ -16,7 +16,23 @@ exports.run = function(address, port, name) {
         });
 
         socket.on("state", function(data) {
-            console.log(data);
+            if (data && data.turn) {
+                console.log("Turn: " + data.turn);
+
+                // TODO: The following is just for testing purposes
+                if (Math.random() > 0.1) {
+                    setTimeout(function() {
+                        var response = {
+                            turn: data.turn,
+                            action: "UP"
+                        };
+                        console.log("Sending a response (turn " + data.turn + ").");
+                        socket.emit("response", response);
+                    }, Math.random() * 6000);
+                } else {
+                    console.log("Not sending a response (turn " + data.turn + ").");
+                }
+            }
         });
     });
 

@@ -10,11 +10,12 @@ function Player(name, socket, connected) {
 
 // Stores all players
 var players = {};
-var currentPlayer = null;
 
 var playerQueue = require("./playerqueue.js");
-var timer = null;
-var turnCounter = 0;
+var currentPlayer = null;
+var currentTurn = 0;
+
+var timeoutTimer = null;
 
 
 exports.run = function(port) {
@@ -58,8 +59,28 @@ function onConnection(socket) {
             playerQueue.addPlayer(player);
         }
 
-        if (timer === null) {
+        if (timeoutTimer === null) {
             nextTurn();
+        }
+    });
+
+    // Client sends a response
+    socket.on("response", function(response) {
+        // Check that the response is sent by a correct player and at a correct turn
+        if (player === currentPlayer && response.turn === currentTurn) {
+            console.log("Player " + player.name + " sent a response.");
+
+            // Stop the timeout timer
+            clearTimeout(timeoutTimer);
+            timeoutTimer = null;
+
+            // TODO: Handle the reponse
+
+            // Move to the next player
+            nextTurn();
+        } else {
+            // Ignore wrong responses
+            console.log("Player " + player.name + " sent a response at a wrong turn.");
         }
     });
 
@@ -73,9 +94,9 @@ function onConnection(socket) {
             if (player === currentPlayer) {
                 currentPlayer = null;
 
-                // Clear timer and move to a next player
-                clearTimeout(timer);
-                timer = null;
+                // Clear the timeout timer and move to the next player
+                clearTimeout(timeoutTimer);
+                timeoutTimer = null;
                 nextTurn();
             }
 
@@ -84,26 +105,32 @@ function onConnection(socket) {
     });
 }
 
+function timeout() {
+    console.log("Timeout: " + currentPlayer.name);
+    nextTurn();
+}
+
 function nextTurn() {
     // Get the next connected player from the queue
     currentPlayer = playerQueue.getConnectedPlayer();
 
     if (currentPlayer) {
-        ++turnCounter;
+        ++currentTurn;
 
-        console.log("Turn " + turnCounter);
-        playerQueue.print();
+        console.log("\nTurn " + currentTurn);
+        console.log("Queue: " + playerQueue);
 
         // Emit the current world state
-        currentPlayer.socket.emit("state", { "turn": turnCounter });
+        currentPlayer.socket.emit("state", { "turn": currentTurn });
 
         // Move this player to the back of the queue
         playerQueue.moveFirstToBack();
 
         // Wait for the answer
-        timer = setTimeout(nextTurn, TIMEOUT);
+        timeoutTimer = setTimeout(timeout, TIMEOUT);
     } else {
         // There are no connected players
-        timer = null;
+        timeoutTimer = null;
     }
 }
+

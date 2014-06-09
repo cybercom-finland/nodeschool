@@ -19,15 +19,18 @@ exports.getConnectedPlayer = function() {
     return null;
 }
 
-exports.print = function() {
-    var str = "Queue:";
+exports.toString = function() {
+    var str = "";
 
     queue.forEach(function(player) {
-        str += " " + player.name;
+        if (str) {
+            str += ", ";
+        }
+        str += player.name;
         if (!player.connected) {
             str += "*";
         }
     });
 
-    console.log(str);
+    return str;
 }
