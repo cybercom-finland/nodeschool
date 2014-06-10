@@ -127,7 +127,8 @@ function onConnection(socket) {
             clearTimeout(timeoutTimer);
             timeoutTimer = null;
 
-            // TODO: Handle the reponse
+            // Handle the response
+            handleResponse(response);
 
             // Move to the next player
             nextTurn();
@@ -159,11 +160,13 @@ function onConnection(socket) {
     });
 }
 
-function timeout() {
+// Called when the player does not respond in time
+function onTimeout() {
     console.log("Timeout: " + currentPlayer.name);
     nextTurn();
 }
 
+// Moves the turn to the next connected player
 function nextTurn() {
     // Get the next connected player from the queue
     currentPlayer = playerQueue.getConnectedPlayer();
@@ -187,10 +190,14 @@ function nextTurn() {
         playerQueue.moveFirstToBack();
 
         // Wait for the answer
-        timeoutTimer = setTimeout(timeout, TIMEOUT);
+        timeoutTimer = setTimeout(onTimeout, TIMEOUT);
     } else {
         // There are no connected players
         timeoutTimer = null;
     }
 }
 
+// Handles the response received from the current player
+function handleResponse(response) {
+    console.log("Player " + currentPlayer.name + " action: " + response.action);
+}
