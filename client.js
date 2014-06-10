@@ -26,15 +26,18 @@ exports.run = function(address, port, name) {
             if (data && data.world) {
                 // Print the received world for debugging purposes
                 console.log("World:");
-                for (var i = 0; i < data.world.length; i++) {
+                for (var y = 0; y < data.world[0].length; y++) {
                     var line = "    ";
-                    for (var j = 0; j < data.world[i].length; j++) {
-                        line += data.world[i][j];
+                    for (var x = 0; x < data.world.length; x++) {
+                        line += data.world[x][y];
                     }
                     console.log(line);
                 }
             }
-
+            if (data && data.coordinates) {
+                // Print the received world for debugging purposes
+                console.log("Coordinates: " + JSON.stringify(data.coordinates));
+            }
             if (data && data.turn) {
                 console.log("Turn: " + data.turn);
                 handleTurn(data);
