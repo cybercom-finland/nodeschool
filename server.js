@@ -134,6 +134,11 @@ function onConnection(socket) {
 // Called when the player does not respond in time
 function onTimeout() {
     console.log("Timeout: " + currentPlayer.name);
+
+    // Inform the client about the timeout
+    currentPlayer.socket.emit("timeout");
+
+    // Move to the next player
     nextTurn();
 }
 

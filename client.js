@@ -1,9 +1,8 @@
 // A client
 
-var TIMEOUT = 5000;
-
 var cp = require('child_process');
 var socket;
+var aiProcess;
 
 exports.run = function(address, port, name) {
     socket = require("socket.io-client").connect(address, { port: port });
@@ -20,6 +19,7 @@ exports.run = function(address, port, name) {
             process.exit(0);
         });
 
+        // The server sends the world state
         socket.on("state", function(data) {
             console.log();
 
@@ -47,6 +47,9 @@ exports.run = function(address, port, name) {
                 console.log("Not my turn");
             }
         });
+
+        // The server sends the timeout signal
+        socket.on("timeout", onTimeout);
     });
 
     // Handle connection errors
@@ -69,15 +72,13 @@ function handleTurn(data) {
     }
 
     // Create a new process for AI
-    var aiProcess = cp.fork(__dirname + "/ai.js");
-    var timeoutTimer;
+    aiProcess = cp.fork(__dirname + "/ai.js");
 
     // AI sends a response
     aiProcess.on("message", function(action) {
-        // Kill the process and stop the timer
+        // Kill the process
         aiProcess.kill();
-        clearTimeout(timeoutTimer);
-        timeoutTimer = null;
+        aiProcess = null;
 
         // Send the response to the server
         var response = {
@@ -89,12 +90,15 @@ function handleTurn(data) {
         socket.emit("response", response);
     });
 
-    // A timer to handle timeout
-    timeoutTimer = setTimeout(function() {
-        console.log("Time's up!");
-        aiProcess.kill();
-    }, TIMEOUT);
-
     // Send the world state to the AI process
     aiProcess.send(data);
+}
+
+function onTimeout() {
+    console.log("Time's up!");
+
+    // Stop the AI process
+    if (aiProcess) {
+        aiProcess.kill();
+    }
 }
