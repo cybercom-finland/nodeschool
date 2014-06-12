@@ -33,7 +33,7 @@ exports.run = function(address, port, name) {
                 for (var y = 0; y < data.world[0].length; y++) {
                     var line = "    ";
                     for (var x = 0; x < data.world.length; x++) {
-                        var c = data.world[x][y];
+                        var c = data.world[x][y].value;
                         if (c === "1" || c === "2" || c === "3" || c === "4") {
                             line += clc.yellowBright(c);
                         } else if (c === "X") {

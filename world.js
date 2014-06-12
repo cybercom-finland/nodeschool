@@ -1,3 +1,5 @@
+var Item = require("./item.js");
+
 // Constructor for World object
 //
 // Initial list of basic characters that can be used demonstrating the world,
@@ -6,7 +8,7 @@
 //  - '#': Block
 //  - ' ': Open space
 //  - 'X': Wall
-//  - 'O': Bomb
+//  - 'Q': Bomb
 //  - '?': Pickup
 //  - '!': Enemy
 //  - <n>: Player <n>
@@ -26,7 +28,7 @@ exports.World = function(width, height) {
         for (var y = 0; y < height; y++) {
             // Initialize the world with borders
             if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
-                this.state[x][y] = "#";
+                this.state[x][y] = new Item.HardBlockItem();
             } else {
                 // Other tiles are generated randomly for now
                 this.state[x][y] = getRandomItem();
@@ -38,11 +40,11 @@ exports.World = function(width, height) {
 var getRandomItem = function() {
     var random = Math.random();
     if (random < 0.2) {
-        return '#';
+        return new Item.HardBlockItem();
     } else if (random < 0.5) {
-        return 'X';
+        return new Item.SoftBlockItem();
     } else {
-        return ' ';
+        return new Item.OpenSpaceItem();
     }
 }
 
@@ -57,9 +59,9 @@ exports.getStartPointForNewPlayer = function(world, name) {
     var randomX = Math.floor(Math.random() * (world.width - 1) + 1);
     var randomY = Math.floor(Math.random() * (world.height - 1) + 1);
     console.log("Random point: [" + randomX + "][" + randomY + "]");
-    console.log("State: " + world.state[randomX][randomY]);
-    if (world.state[randomX][randomY] && world.state[randomX][randomY] === ' ') {
-        world.state[randomX][randomY] = name.charAt(name.length - 1);
+    console.log("State: " + world.state[randomX][randomY].value);
+    if (world.state[randomX][randomY] && world.state[randomX][randomY].value === ' ') {
+        world.state[randomX][randomY] = new Item.PlayerItem(name);
         return {
             x: randomX,
             y: randomY

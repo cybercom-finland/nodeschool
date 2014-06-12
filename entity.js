@@ -1,3 +1,5 @@
+var Item = require("./item.js");
+
 function Entity(world) {
     this.coordinates = {};
     this.world = world;
@@ -41,7 +43,7 @@ Entity.prototype.move = function(direction) {
 
     // Update the world grid
     this.world.state[newX][newY] = this.world.state[oldX][oldY];
-    this.world.state[oldX][oldY] = " ";
+    this.world.state[oldX][oldY] = new Item.OpenSpaceItem();
 
     return true;
 };
