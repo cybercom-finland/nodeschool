@@ -4,6 +4,7 @@
     "dependencies": {
         "socket.io": "*",
         "socket.io-client": "*",
-        "express": "*"
+        "express": "*",
+        "cli-color": "*"
     }
 }

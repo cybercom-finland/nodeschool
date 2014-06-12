@@ -1,11 +1,15 @@
 // A client
 
-var cp = require('child_process');
+var clc = require("cli-color");
+var cp = require("child_process");
 var socket;
-var aiProcess;
+var currentTurn;
 
 exports.run = function(address, port, name) {
     socket = require("socket.io-client").connect(address, { port: port });
+
+    // Create a new process for AI
+    initializeAIProcess();
 
     socket.on("connect", function() {
         console.log("Connection established.");
@@ -29,7 +33,14 @@ exports.run = function(address, port, name) {
                 for (var y = 0; y < data.world[0].length; y++) {
                     var line = "    ";
                     for (var x = 0; x < data.world.length; x++) {
-                        line += data.world[x][y];
+                        var c = data.world[x][y];
+                        if (c === "1" || c === "2" || c === "3" || c === "4") {
+                            line += clc.yellowBright(c);
+                        } else if (c === "X") {
+                            line += clc.blackBright(c);
+                        } else {
+                            line += c;
+                        }
                     }
                     console.log(line);
                 }
@@ -40,6 +51,7 @@ exports.run = function(address, port, name) {
             }
             if (data && data.turn) {
                 console.log("Turn: " + data.turn);
+                currentTurn = data.turn;
                 handleTurn(data);
             } else {
                 // If initial world (at connection time) is received and it is someone else's turn,
@@ -66,39 +78,54 @@ exports.run = function(address, port, name) {
     });
 };
 
-function handleTurn(data) {
-    if (!socket) {
-        return;
-    }
-
-    // Create a new process for AI
+// Initializes the AI
+function initializeAIProcess() {
     aiProcess = cp.fork(__dirname + "/ai.js");
 
     // AI sends a response
     aiProcess.on("message", function(action) {
-        // Kill the process
-        aiProcess.kill();
-        aiProcess = null;
-
         // Send the response to the server
         var response = {
-            turn: data.turn,
+            turn: currentTurn,
             action: action
         };
 
-        console.log("Sending a response (turn " + data.turn + ").");
+        console.log("Sending a response: " + action);
         socket.emit("response", response);
     });
 
-    // Send the world state to the AI process
-    aiProcess.send(data);
+    // AI exits
+    aiProcess.on("exit", function() {
+        // Disconnect cleanly
+        socket.disconnect();
+        process.exit(1);
+    });
+    aiProcess.on("error", function(err) {
+        // Disconnect cleanly
+        socket.disconnect();
+        process.exit(1);
+    });
 }
 
+// Handles one turn
+function handleTurn(data) {
+    // Send the world state to the AI process
+    if (aiProcess) {
+        aiProcess.send(data);
+    } else {
+        console.error("AI process does not exist!");
+        process.exit(1);
+    }
+}
+
+// Called when the server sends a timeout signal
 function onTimeout() {
     console.log("Time's up!");
 
-    // Stop the AI process
-    if (aiProcess) {
-        aiProcess.kill();
+    // Disconnect from the server
+    if (socket) {
+        socket.disconnect();
     }
+
+    process.exit();
 }

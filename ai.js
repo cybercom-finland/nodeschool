@@ -13,5 +13,5 @@ process.on("message", function(state) {
         else action = "BOMB";
 
         process.send(action);
-    }, Math.random() * 6000);
+    }, Math.random() * 3000);
 });

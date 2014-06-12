@@ -6,14 +6,8 @@ var TIMEOUT = 5000;
 var HEIGHT = 20;
 var WIDTH = 40;
 
-function Player(name, socket, connected) {
-    this.name = name;
-    this.socket = socket;
-    this.connected = connected;
-    this.coordinates = {};
-}
-
 // Stores all players
+var Player = require("./player.js");
 var players = {};
 
 var playerQueue = require("./playerqueue.js");
@@ -61,7 +55,7 @@ function onConnection(socket) {
             console.log("Player reconnected: " + player.name);
         } else {
             // Add a new player
-            player = new Player(name, socket, true);
+            player = new Player(name, socket, true, worldGrid);
             console.log("New player: " + player.name);
 
             player.coordinates = world.getStartPointForNewPlayer(worldGrid, player.name);
@@ -107,7 +101,6 @@ function onConnection(socket) {
             // Ignore wrong responses
             console.log("Player " + player.name + " sent a response at a wrong turn.");
         }
-
     });
 
     // Client has disconnected
@@ -177,4 +170,11 @@ function nextTurn() {
 // Handles the response received from the current player
 function handleResponse(response) {
     console.log("Player " + currentPlayer.name + " action: " + response.action);
+
+    if (response.action === "BOMB") {
+        // TODO: Handle bombs
+    } else {
+        // Move the player
+        currentPlayer.move(response.action);
+    }
 }
