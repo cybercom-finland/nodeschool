@@ -7,7 +7,7 @@ function Entity(world) {
 
 Entity.prototype.move = function(direction) {
     if (!this.world) {
-        return false;
+        return null;
     }
 
     // Remember old coordinates
@@ -25,7 +25,7 @@ Entity.prototype.move = function(direction) {
         ++this.coordinates.x;
     } else {
         console.log("Unknown direction.");
-        return false;
+        return null;
     }
 
     // Get new coordinates
@@ -33,19 +33,28 @@ Entity.prototype.move = function(direction) {
     var newY = this.coordinates.y;
 
     // Make sure that the new coordinates are inside the world
-    if (newX < 0 || newY < 0 || newX >= this.world.state.length || newY >= this.world.state[0].length) {
+    if (newX < 0 || newY < 0 || newX >= this.world.state.width || newY >= this.world.state.height) {
         this.coordinates.x = oldX;
         this.coordinates.y = oldY;
-        return false;
+        return null;
     }
 
-    // TODO: Handle collisions and pickups
+
+    // Check that the new tile is free
+    var tileType = this.world.state[newX][newY].type;
+    if (tileType !== "OpenSpace") {
+        this.coordinates.x = oldX;
+        this.coordinates.y = oldY;
+        return null;
+    }
+
+    // TODO: Handle pickups
 
     // Update the world grid
     this.world.state[newX][newY] = this.world.state[oldX][oldY];
     this.world.state[oldX][oldY] = new Item.OpenSpaceItem();
 
-    return true;
+    return tileType;
 };
 
 module.exports = Entity;

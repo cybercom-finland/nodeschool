@@ -175,6 +175,9 @@ function handleResponse(response) {
         // TODO: Handle bombs
     } else {
         // Move the player
-        currentPlayer.move(response.action);
+        var newTileType = currentPlayer.move(response.action);
+        if (newTileType === null) {
+            console.log("Player " + currentPlayer.name + " is unable to move to that direction.");
+        }
     }
 }
