@@ -19,6 +19,8 @@ var timeoutTimer = null;
 var world = require("./world.js");
 var worldGrid = null;
 
+var visualizer = require("./visualizer.js");
+
 exports.run = function(port) {
     var express = require("express");
     var app = express();
@@ -38,6 +40,12 @@ exports.run = function(port) {
 
 function onConnection(socket) {
     var player = null;
+
+    // Client wants to visualize the game
+    socket.on("startvisualization", function() {
+        // Send the world state and players
+        visualizer.addWatcher(socket, worldGrid.state, players);
+    });
 
     // Client sends player's name
     socket.on("setname", function(name) {
@@ -65,6 +73,9 @@ function onConnection(socket) {
 
             // Add the player to a queue
             playerQueue.addPlayer(player);
+
+            // Send information to the visualizer
+            visualizer.addPlayer(player.name, player.coordinates);
         }
 
         if (timeoutTimer === null) {
@@ -78,7 +89,6 @@ function onConnection(socket) {
                 "world": worldGrid.state
             }
             player.socket.emit("state", state);
-
         }
     });
 
@@ -121,6 +131,8 @@ function onConnection(socket) {
 
             player = null;
         }
+
+        visualizer.removeWatcher(socket);
     });
 }
 
@@ -178,6 +190,9 @@ function handleResponse(response) {
         var newTileType = currentPlayer.move(response.action);
         if (newTileType === null) {
             console.log("Player " + currentPlayer.name + " is unable to move to that direction.");
+        } else {
+            // Send information to the visualizer
+            visualizer.movePlayer(currentPlayer.name, currentPlayer.coordinates);
         }
     }
 }
