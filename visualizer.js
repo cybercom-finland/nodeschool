@@ -1,14 +1,14 @@
 var watchers = [];
 
-exports.addWatcher = function(socket, worldState, players) {
+exports.addWatcher = function(socket, world) {
     // Save the socket to the array
     watchers.push(socket);
     console.log("Watcher added.");
 
     // Send the current state of the game
-    socket.emit("worldstate", worldState);
-    Object.keys(players).forEach(function(name) {
-        socket.emit("addplayer", name, players[name].coordinates);
+    socket.emit("worldstate", world.grid);
+    Object.keys(world.players).forEach(function(name) {
+        socket.emit("addplayer", name, world.players[name].coordinates);
     });
 };
 

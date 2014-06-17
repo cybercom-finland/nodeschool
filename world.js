@@ -1,4 +1,10 @@
 var Item = require("./item.js");
+var Player = require("./player.js");
+var Bomb = require("./bomb.js");
+
+// World size as tiles (not pixels)
+var HEIGHT = 20;
+var WIDTH = 40;
 
 // Constructor for World object
 //
@@ -17,27 +23,30 @@ var Item = require("./item.js");
 //  To be designed and developped further to support real functionality,
 //  e.g. bombs need timers, players need names and pickup items need details
 
-exports.World = function(width, height) {
-    this.width = width;
-    this.height = height;
-    console.log("Creating world with " + width + "x" + height + " tiles");
+function World() {
+    this.width = WIDTH;
+    this.height = HEIGHT;
+    console.log("Creating world with " + this.width + "x" + this.height + " tiles");
 
-    this.state = new Array(width);
-    for (var x = 0; x < width; x++) {
-        this.state[x] = new Array(height);
-        for (var y = 0; y < height; y++) {
+    this.grid = new Array(this.width);
+    for (var x = 0; x < this.width; x++) {
+        this.grid[x] = new Array(this.height);
+        for (var y = 0; y < this.height; y++) {
             // Initialize the world with borders
-            if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
-                this.state[x][y] = new Item.HardBlockItem();
+            if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
+                this.grid[x][y] = new Item.HardBlockItem();
             } else {
                 // Other tiles are generated randomly for now
-                this.state[x][y] = getRandomItem();
+                this.grid[x][y] = this.getRandomItem();
             }
         }
     }
+
+    this.players = {};
+    this.bombs = [];
 }
 
-var getRandomItem = function() {
+World.prototype.getRandomItem = function() {
     var random = Math.random();
     if (random < 0.2) {
         return new Item.HardBlockItem();
@@ -54,20 +63,87 @@ var getRandomItem = function() {
 // probably some (more) AI is needed, to get a "peaceful" startup
 // (not next to another player or exploding bomb etc)
 
-exports.getStartPointForNewPlayer = function(world, name) {
+World.prototype.getStartPointForNewPlayer = function() {
     // Get random coordinates between the borders (1..length-1)
-    var randomX = Math.floor(Math.random() * (world.width - 1) + 1);
-    var randomY = Math.floor(Math.random() * (world.height - 1) + 1);
+    var randomX = Math.floor(Math.random() * (this.width - 1) + 1);
+    var randomY = Math.floor(Math.random() * (this.height - 1) + 1);
     console.log("Random point: [" + randomX + "][" + randomY + "]");
-    console.log("State: " + world.state[randomX][randomY].value);
-    if (world.state[randomX][randomY] && world.state[randomX][randomY].value === ' ') {
-        world.state[randomX][randomY] = new Item.PlayerItem(name);
+    console.log("State: " + this.grid[randomX][randomY].value);
+    if (this.grid[randomX][randomY] && this.grid[randomX][randomY].value === ' ') {
         return {
             x: randomX,
             y: randomY
         }
     } else {
         // If invalid or reserved point, call this recursively
-        return this.getStartPointForNewPlayer(world, name);
+        return this.getStartPointForNewPlayer();
     }
 }
+
+// Creates a new player and returns it
+World.prototype.addPlayer = function(name, socket) {
+    var player = new Player(name, socket, this);
+    player.coordinates = this.getStartPointForNewPlayer();
+    this.players[name] = player;
+
+    return player;
+}
+
+// Returns a player
+World.prototype.getPlayer = function(name) {
+    return this.players[name];
+}
+
+World.prototype.addBomb = function(x, y, timer) {
+    var bomb = new Bomb(timer, this);
+    bomb.coordinates.x = x;
+    bomb.coordinates.y = y;
+    this.bombs.push(bomb);
+
+    return bomb;
+}
+
+// Returns coordinates of all enemy players
+World.prototype.getEnemies = function(name) {
+    var self = this;
+    var enemies = [];
+
+    Object.keys(this.players).forEach(function(enemyName) {
+        if (enemyName !== name) {
+            enemies.push({
+                "coordinates": self.players[enemyName].coordinates
+            });
+        }
+    });
+
+    return enemies;
+}
+
+// Checks if the coordinates are inside the world
+World.prototype.isInside = function(x, y) {
+    return x >= 0 && y >= 0 && x < this.width && y < this.height;
+};
+
+// Checks if the tile is free
+World.prototype.isFree = function(x, y) {
+    var self = this;
+    var tileType = this.grid[x][y].type;
+    var free = true;
+
+    if (tileType === "HardBlock" || tileType === "SoftBlock") {
+        // Tile is not free
+        free = false;
+    } else {
+        // Check whether the tile is occupied by another player
+        Object.keys(this.players).forEach(function(name) {
+            var player = self.players[name];
+            if (player.coordinates.x === x && player.coordinates.y === y) {
+                free = false;
+            }
+        });
+    }
+
+    return free;
+};
+
+module.exports = World;

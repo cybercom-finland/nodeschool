@@ -2,22 +2,17 @@
 
 var TIMEOUT = 5000;
 
-// World size as tiles (not pixels)
-var HEIGHT = 20;
-var WIDTH = 40;
+var timeoutTimer = null;
 
-// Stores all players
 var Player = require("./player.js");
-var players = {};
+var Bomb = require("./bomb.js");
 
 var playerQueue = require("./playerqueue.js");
 var currentPlayer = null;
 var currentTurn = 0;
 
-var timeoutTimer = null;
-
-var world = require("./world.js");
-var worldGrid = null;
+var World = require("./world.js");
+var world = null;
 
 var visualizer = require("./visualizer.js");
 
@@ -35,7 +30,7 @@ exports.run = function(port) {
     socketio.on("connection", onConnection);
 
     // Create a new world
-    worldGrid = new world.World(WIDTH, HEIGHT);
+    world = new World();
 };
 
 function onConnection(socket) {
@@ -44,15 +39,25 @@ function onConnection(socket) {
     // Client wants to visualize the game
     socket.on("startvisualization", function() {
         // Send the world state and players
-        visualizer.addWatcher(socket, worldGrid.state, players);
+        visualizer.addWatcher(socket, world);
     });
 
     // Client sends player's name
     socket.on("setname", function(name) {
-        if (players.hasOwnProperty(name)) {
-            // This is an old player
-            player = players[name];
+        player = world.getPlayer(name);
 
+        if (!player) {
+            // Add a new player
+            player = world.addPlayer(name, socket);
+            console.log("New player: " + player.name);
+
+            // Add the player to a queue
+            playerQueue.addPlayer(player);
+
+            // Send information to the visualizer
+            visualizer.addPlayer(player.name, player.coordinates);
+        } else {
+            // This is an old player.
             // Do not allow multiple connections with a same name
             if (player.connected) {
                 player.socket.disconnect();
@@ -61,21 +66,6 @@ function onConnection(socket) {
             player.socket = socket;
             player.connected = true;
             console.log("Player reconnected: " + player.name);
-        } else {
-            // Add a new player
-            player = new Player(name, socket, true, worldGrid);
-            console.log("New player: " + player.name);
-
-            player.coordinates = world.getStartPointForNewPlayer(worldGrid, player.name);
-            console.log("StartPoint: " + JSON.stringify(player.coordinates));
-
-            players[name] = player;
-
-            // Add the player to a queue
-            playerQueue.addPlayer(player);
-
-            // Send information to the visualizer
-            visualizer.addPlayer(player.name, player.coordinates);
         }
 
         if (timeoutTimer === null) {
@@ -86,7 +76,8 @@ function onConnection(socket) {
             var state = {
                 "turn": null,
                 "coordinates": player.coordinates,
-                "world": worldGrid.state
+                "enemies": world.getEnemies(player.name),
+                "world": world.grid
             }
             player.socket.emit("state", state);
         }
@@ -158,21 +149,40 @@ function nextTurn() {
         console.log("\nTurn " + currentTurn);
         console.log("Queue: " + playerQueue);
 
-        // State contains the current turn and current world
-        var state = {
-            "turn": currentTurn,
-            "coordinates": currentPlayer.coordinates,
-            "world": worldGrid.state
-        };
+        if (currentPlayer instanceof Player) {
+            // State contains the current turn and current world
+            var state = {
+                "turn": currentTurn,
+                "coordinates": currentPlayer.coordinates,
+                "enemies": world.getEnemies(currentPlayer.name),
+                "world": world.grid
+            };
 
-        // Emit the current world state
-        currentPlayer.socket.emit("state", state);
+            // Emit the current world state
+            currentPlayer.socket.emit("state", state);
 
-        // Move this player to the back of the queue
-        playerQueue.moveFirstToBack();
+            // Move this player to the back of the queue
+            playerQueue.moveFirstToBack();
 
-        // Wait for the answer
-        timeoutTimer = setTimeout(onTimeout, TIMEOUT);
+            // Wait for the answer
+            timeoutTimer = setTimeout(onTimeout, TIMEOUT);
+
+        } else if (currentPlayer instanceof Bomb) {
+            // Decrease the bomb timer
+            --currentPlayer.timer;
+            if (currentPlayer.timer <= 0) {
+                // Remove the bomb from the queue
+                playerQueue.removeFirst();
+
+                console.log("Bomb exploded!");
+            } else {
+                // Move the bomb to the back of the queue
+                playerQueue.moveFirstToBack();
+            }
+
+            // Move to the next entity
+            nextTurn();
+        }
     } else {
         // There are no connected players
         timeoutTimer = null;
@@ -184,7 +194,11 @@ function handleResponse(response) {
     console.log("Player " + currentPlayer.name + " action: " + response.action);
 
     if (response.action === "BOMB") {
-        // TODO: Handle bombs
+        // Create a new bomb
+        var bomb = world.addBomb(currentPlayer.coordinates.x, currentPlayer.coordinates.y, 5);
+
+        // Add the bomb to a queue
+        playerQueue.addPlayer(bomb);
     } else {
         // Move the player
         var newTileType = currentPlayer.move(response.action);

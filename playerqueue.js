@@ -9,6 +9,10 @@ exports.moveFirstToBack = function() {
     queue.push(player);
 }
 
+exports.removeFirst = function() {
+    queue.shift();
+}
+
 exports.getConnectedPlayer = function() {
     for (var i = 0; i < queue.length; ++i) {
         if (queue[0].connected) {
@@ -26,7 +30,7 @@ exports.toString = function() {
         if (str) {
             str += ", ";
         }
-        str += player.name;
+        str += player;
         if (!player.connected) {
             str += "*";
         }

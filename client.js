@@ -34,11 +34,19 @@ exports.run = function(address, port, name) {
                     var line = "    ";
                     for (var x = 0; x < data.world.length; x++) {
                         var c = data.world[x][y].value;
-                        if (c === "1" || c === "2" || c === "3" || c === "4") {
-                            line += clc.yellowBright(c);
+                        if (c === "#") {
+                            line += c;
                         } else if (c === "X") {
                             line += clc.blackBright(c);
+                        } else if (data.coordinates.x === x && data.coordinates.y === y) {
+                            line += clc.yellowBright("P");
                         } else {
+                            for (var i = 0; i < data.enemies.length; ++i) {
+                                if (data.enemies[i].coordinates.x === x && data.enemies[i].coordinates.y === y) {
+                                    c = clc.yellowBright("E");
+                                    break;
+                                }
+                            }
                             line += c;
                         }
                     }
