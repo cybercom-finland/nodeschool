@@ -8,6 +8,8 @@ function Player(name, socket, world) {
     this.name = name;
     this.socket = socket;
     this.connected = true;
+    this.bombsDropped = 0;
+    this.maxAllowedBombs = 1;
 };
 
 Player.prototype.toString = function() {

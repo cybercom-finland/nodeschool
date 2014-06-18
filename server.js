@@ -1,15 +1,17 @@
 // A server
 
 var TIMEOUT = 5000;
+var DELAY = 500;
 
 var timeoutTimer = null;
 
 var Player = require("./player.js");
 var Bomb = require("./bomb.js");
 
-var playerQueue = require("./playerqueue.js");
-var currentPlayer = null;
+var entityQueue = require("./playerqueue.js");
+var currentEntity = null;
 var currentTurn = 0;
+var activePlayers = false;
 
 var World = require("./world.js");
 var world = null;
@@ -52,7 +54,7 @@ function onConnection(socket) {
             console.log("New player: " + player.name);
 
             // Add the player to a queue
-            playerQueue.addPlayer(player);
+            entityQueue.addPlayer(player);
 
             // Send information to the visualizer
             visualizer.addPlayer(player.name, player.coordinates);
@@ -68,8 +70,10 @@ function onConnection(socket) {
             console.log("Player reconnected: " + player.name);
         }
 
-        if (timeoutTimer === null) {
-            nextTurn();
+        if (!activePlayers) {
+            // Give the turn to a newly added player because it is the only active one in the queue
+            activePlayers = true;
+            nextTurn(0);
         } else {
             // Tell the world state with null turn,
             // if not yet the turn of the (re)connected player
@@ -86,9 +90,7 @@ function onConnection(socket) {
     // Client sends a response
     socket.on("response", function(response) {
         // Check that the response is sent by a correct player and at a correct turn
-        if (player === currentPlayer && response.turn === currentTurn) {
-            console.log("Player " + player.name + " sent a response.");
-
+        if (player === currentEntity && response.turn === currentTurn) {
             // Stop the timeout timer
             clearTimeout(timeoutTimer);
             timeoutTimer = null;
@@ -97,7 +99,7 @@ function onConnection(socket) {
             handleResponse(response);
 
             // Move to the next player
-            nextTurn();
+            nextTurn(DELAY);
         } else {
             // Ignore wrong responses
             console.log("Player " + player.name + " sent a response at a wrong turn.");
@@ -111,13 +113,13 @@ function onConnection(socket) {
             player.connected = false;
 
             // Check whether this was a player whose turn it is
-            if (player === currentPlayer) {
-                currentPlayer = null;
+            if (player === currentEntity) {
+                currentEntity = null;
 
                 // Clear the timeout timer and move to the next player
                 clearTimeout(timeoutTimer);
                 timeoutTimer = null;
-                nextTurn();
+                nextTurn(0);
             }
 
             player = null;
@@ -129,84 +131,97 @@ function onConnection(socket) {
 
 // Called when the player does not respond in time
 function onTimeout() {
-    console.log("Timeout: " + currentPlayer.name);
+    console.log("Timeout: " + currentEntity.name);
 
     // Inform the client about the timeout
-    currentPlayer.socket.emit("timeout");
+    currentEntity.socket.emit("timeout");
 
     // Move to the next player
-    nextTurn();
+    nextTurn(0);
+}
+
+// Starts the next turn after a small delay
+function nextTurn(delay) {
+    currentEntity = null;
+    setTimeout(startNextTurn, delay);
 }
 
 // Moves the turn to the next connected player
-function nextTurn() {
+function startNextTurn() {
     // Get the next connected player from the queue
-    currentPlayer = playerQueue.getConnectedPlayer();
+    currentEntity = entityQueue.getConnectedPlayer();
 
-    if (currentPlayer) {
+    if (currentEntity) {
         ++currentTurn;
 
         console.log("\nTurn " + currentTurn);
-        console.log("Queue: " + playerQueue);
+        console.log("Queue: " + entityQueue);
 
-        if (currentPlayer instanceof Player) {
+        if (currentEntity instanceof Player) {
             // State contains the current turn and current world
             var state = {
                 "turn": currentTurn,
-                "coordinates": currentPlayer.coordinates,
-                "enemies": world.getEnemies(currentPlayer.name),
+                "coordinates": currentEntity.coordinates,
+                "enemies": world.getEnemies(currentEntity.name),
                 "world": world.grid
             };
 
             // Emit the current world state
-            currentPlayer.socket.emit("state", state);
+            currentEntity.socket.emit("state", state);
 
             // Move this player to the back of the queue
-            playerQueue.moveFirstToBack();
+            entityQueue.moveFirstToBack();
 
             // Wait for the answer
             timeoutTimer = setTimeout(onTimeout, TIMEOUT);
 
-        } else if (currentPlayer instanceof Bomb) {
+        } else if (currentEntity instanceof Bomb) {
             // Decrease the bomb timer
-            --currentPlayer.timer;
-            if (currentPlayer.timer <= 0) {
+            --currentEntity.timer;
+            if (currentEntity.timer <= 0) {
                 // Remove the bomb from the queue
-                playerQueue.removeFirst();
+                entityQueue.removeFirst();
+                --currentEntity.owner.bombsDropped;
 
-                console.log("Bomb exploded!");
+                console.log("Bomb dropped by a player " + currentEntity.owner + " exploded!");
             } else {
                 // Move the bomb to the back of the queue
-                playerQueue.moveFirstToBack();
+                entityQueue.moveFirstToBack();
             }
 
             // Move to the next entity
-            nextTurn();
+            nextTurn(DELAY);
         }
     } else {
         // There are no connected players
         timeoutTimer = null;
+        activePlayers = false;
     }
 }
 
 // Handles the response received from the current player
 function handleResponse(response) {
-    console.log("Player " + currentPlayer.name + " action: " + response.action);
+    console.log("Player " + currentEntity.name + " action: " + response.action);
 
     if (response.action === "BOMB") {
-        // Create a new bomb
-        var bomb = world.addBomb(currentPlayer.coordinates.x, currentPlayer.coordinates.y, 5);
+        if (currentEntity.bombsDropped >= currentEntity.maxAllowedBombs) {
+            console.log("Player " + currentEntity.name + " has already dropped a maximum number of bombs.");
+        } else {
+            // Create a new bomb
+            var bomb = world.addBomb(currentEntity);
+            ++currentEntity.bombsDropped;
 
-        // Add the bomb to a queue
-        playerQueue.addPlayer(bomb);
+            // Add the bomb to a queue
+            entityQueue.addPlayer(bomb);
+        }
     } else {
         // Move the player
-        var newTileType = currentPlayer.move(response.action);
+        var newTileType = currentEntity.move(response.action);
         if (newTileType === null) {
-            console.log("Player " + currentPlayer.name + " is unable to move to that direction.");
+            console.log("Player " + currentEntity.name + " is unable to move to that direction.");
         } else {
             // Send information to the visualizer
-            visualizer.movePlayer(currentPlayer.name, currentPlayer.coordinates);
+            visualizer.movePlayer(currentEntity.name, currentEntity.coordinates);
         }
     }
 }

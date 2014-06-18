@@ -94,10 +94,10 @@ World.prototype.getPlayer = function(name) {
     return this.players[name];
 }
 
-World.prototype.addBomb = function(x, y, timer) {
-    var bomb = new Bomb(timer, this);
-    bomb.coordinates.x = x;
-    bomb.coordinates.y = y;
+World.prototype.addBomb = function(player) {
+    var bomb = new Bomb(5, player, this);
+    bomb.coordinates.x = player.coordinates.x;
+    bomb.coordinates.y = player.coordinates.y;
     this.bombs.push(bomb);
 
     return bomb;
