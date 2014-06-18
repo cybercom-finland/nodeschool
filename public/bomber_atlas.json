@@ -31,6 +31,126 @@
             "trimmed": false,
             "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
             "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "yellow_player_up_16px.png",
+            "frame": {"x":0,"y":272,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "yellow_player_right_16px.png",
+            "frame": {"x":64,"y":272,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "yellow_player_left_16px.png",
+            "frame": {"x":64,"y":272,"w":16,"h":16},
+            "rotated": true,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_7_16px.png",
+            "frame": {"x":64,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_6_16px.png",
+            "frame": {"x":80,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_5_16px.png",
+            "frame": {"x":96,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_4_16px.png",
+            "frame": {"x":112,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_3_16px.png",
+            "frame": {"x":128,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_2_16px.png",
+            "frame": {"x":144,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_1_16px.png",
+            "frame": {"x":208,"y":256,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_0_16px.png",
+            "frame": {"x":32,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_0_left_16px.png",
+            "frame": {"x":0,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_0_right_16px.png",
+            "frame": {"x":48,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_0_up_16px.png",
+            "frame": {"x":224,"y":208,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "bomb_0_down_16px.png",
+            "frame": {"x":32,"y":240,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
         }
     ],
     "meta": {

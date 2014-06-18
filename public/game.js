@@ -42,10 +42,18 @@ function onMovePlayer(name, coords) {
 
     game.add.sprite(players[name].x * 16, players[name].y * 16, "bomber_atlas", 2);
 
+    if (players[name].x < coords.x) {
+        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", 5); // RIGHT
+    } else if (players[name].x > coords.x) {
+        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", 6); // LEFT - NOTE: "rotated" frame does not work
+    } else if (players[name].y < coords.y) {
+        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", 3); // DOWN
+    } else {
+        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", 4); // UP
+    }
+
     players[name].x = coords.x;
     players[name].y = coords.y;
-
-    game.add.sprite(players[name].x * 16, players[name].y * 16, "bomber_atlas", 3);
 }
 
 function preload() {
