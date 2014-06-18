@@ -5,7 +5,16 @@ var height;
 
 var game;
 
-var SCALE = 2; //
+// Scaling factor for scaling the graphics
+var SCALE = 2;
+// Game world coordinates to separate the actual game area from the background
+var GAME_WORLD = {
+    x: 20,
+    y: 72,
+    width: 640 * SCALE,
+    height: 320 * SCALE
+};
+// Indexes of textures in the sprite sheet (atlas)
 var TEXTURES = {
     HardBlock: 0,
     SoftBlock: 1,
@@ -26,10 +35,10 @@ var TEXTURES = {
     Bomb0Right: 16,
     Bomb0Up: 17,
     Bomb0Down: 18
-}
+};
 
 function addSprite(x, y, idxTexture, flip) {
-    var sprite = game.add.sprite(x * 16 * SCALE, y * 16 * SCALE, "bomber_atlas", idxTexture);
+    var sprite = game.add.sprite(x * 16 * SCALE + GAME_WORLD.x, y * 16 * SCALE + GAME_WORLD.y, "bomber_atlas", idxTexture);
     if (flip) {
         sprite.anchor.setTo(1, 0);
     }
@@ -40,7 +49,6 @@ function addSprite(x, y, idxTexture, flip) {
 }
 
 function onWorldState(state) {
-    // TODO: Draw static objects
     console.log(state);
     world = state;
     width = state.length;
@@ -56,7 +64,6 @@ function onWorldState(state) {
             }
         }
     }
-
 }
 
 function onAddPlayer(name, coords) {
@@ -77,10 +84,7 @@ function onMovePlayer(name, coords) {
         addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight);
     } else if (players[name].x > coords.x) {
         var flip = true;
-        var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight, flip);
-        // Flip the sprite
-        //sprite.anchor.setTo(1, 0);
-        //sprite.scale.x *= -1;
+        addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight, flip);
     } else if (players[name].y < coords.y) {
         addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
     } else {
@@ -92,15 +96,35 @@ function onMovePlayer(name, coords) {
 }
 
 function preload() {
-    game.load.spritesheet("bomber_sheet", "bomb_party_v4.png", 16, 16);
     game.load.atlas("bomber_atlas", "bomb_party_v4.png", "bomber_atlas.json");
+}
+
+function create() {
+    game.stage.setBackgroundColor(0xC0C0C0);
+    // Add title text to canvas
+    var text = "Hack-a-Node";
+    var style = {
+        font: "32px Lucida Console",
+        fill: "#000000",
+        align: "center"
+    };
+    game.add.text(20, 20, text, style);
+
+    // Add support to full screen mode
+    game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+    game.input.onDown.add(goFull, this);
+}
+
+function goFull() {
+    game.scale.startFullScreen();
 }
 
 window.onload = function() {
     var socket = io.connect();
 
-    game = new Phaser.Game(640 * SCALE, 320 * SCALE, Phaser.AUTO, "", {
-        preload: preload
+    game = new Phaser.Game(40 + GAME_WORLD.width, 200 + GAME_WORLD.height, Phaser.AUTO, "game", {
+        preload: preload,
+        create: create
     });
 
     // Inform the server that we want to receive visualization messages
