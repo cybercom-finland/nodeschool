@@ -5,6 +5,7 @@ var height;
 
 var game;
 
+var SCALE = 2; //
 var TEXTURES = {
     HardBlock: 0,
     SoftBlock: 1,
@@ -27,6 +28,17 @@ var TEXTURES = {
     Bomb0Down: 18
 }
 
+function addSprite(x, y, idxTexture, flip) {
+    var sprite = game.add.sprite(x * 16 * SCALE, y * 16 * SCALE, "bomber_atlas", idxTexture);
+    if (flip) {
+        sprite.anchor.setTo(1, 0);
+    }
+    sprite.scale.setTo(SCALE, SCALE);
+    if (flip) {
+        sprite.scale.x *= -1;
+    }
+}
+
 function onWorldState(state) {
     // TODO: Draw static objects
     console.log(state);
@@ -36,11 +48,11 @@ function onWorldState(state) {
 
     for (var y = 0; y < height; y++) {
         for (var x = 0; x < width; x++) {
-            game.add.sprite(x * 16, y * 16, "bomber_atlas", TEXTURES.OpenSpace);
+            addSprite(x, y, TEXTURES.OpenSpace);
             if (world[x][y].type === "HardBlock") {
-                game.add.sprite(x * 16, y * 16, "bomber_atlas", TEXTURES.HardBlock);
+                addSprite(x, y, TEXTURES.HardBlock);
             } else if (world[x][y].type === "SoftBlock") {
-                game.add.sprite(x * 16, y * 16, "bomber_atlas", TEXTURES.SoftBlock);
+                addSprite(x, y, TEXTURES.SoftBlock);
             }
         }
     }
@@ -53,25 +65,26 @@ function onAddPlayer(name, coords) {
         x: coords.x,
         y: coords.y
     };
-    game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", TEXTURES.Player1FaceDown);
+    addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
 }
 
 function onMovePlayer(name, coords) {
     console.log("Player", name, "moved:", players[name].x, players[name].y, "->", coords.x, coords.y);
 
-    game.add.sprite(players[name].x * 16, players[name].y * 16, "bomber_atlas", TEXTURES.OpenSpace);
+    addSprite(players[name].x, players[name].y, TEXTURES.OpenSpace);
 
     if (players[name].x < coords.x) {
-        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", TEXTURES.Player1FaceRight);
+        addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight);
     } else if (players[name].x > coords.x) {
-        var sprite = game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", TEXTURES.Player1FaceRight);
+        var flip = true;
+        var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight, flip);
         // Flip the sprite
-        sprite.anchor.setTo(1, 0);
-        sprite.scale.x *= -1;
+        //sprite.anchor.setTo(1, 0);
+        //sprite.scale.x *= -1;
     } else if (players[name].y < coords.y) {
-        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", TEXTURES.Player1FaceDown);
+        addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
     } else {
-        game.add.sprite(coords.x * 16, coords.y * 16, "bomber_atlas", TEXTURES.Player1FaceUp);
+        addSprite(coords.x, coords.y, TEXTURES.Player1FaceUp);
     }
 
     players[name].x = coords.x;
@@ -86,7 +99,7 @@ function preload() {
 window.onload = function() {
     var socket = io.connect();
 
-    game = new Phaser.Game(640, 320, Phaser.AUTO, "", {
+    game = new Phaser.Game(640 * SCALE, 320 * SCALE, Phaser.AUTO, "", {
         preload: preload
     });
 
