@@ -68,7 +68,7 @@ exports.run = function(address, port, name) {
                 console.log("Coordinates: " + JSON.stringify(data.coordinates));
             }
             if (data && data.turn) {
-                console.log("Turn: " + data.turn);
+                console.log("Turn: " + data.turn + ", score: " + data.score);
                 currentTurn = data.turn;
                 handleTurn(data);
             } else {

@@ -8,22 +8,55 @@ function Bomb(timer, size, owner, world) {
     this.timer = timer;
     this.connected = true;
     this.owner = owner;
-    this.size = size;
+    this.size = 5;
 };
 
 Bomb.prototype.getExplodingCoordinates = function() {
     var coords = [];
+    var i;
 
-    for (var i = -this.size; i <= this.size; ++i) {
+    coords.push({ x: this.coordinates.x, y: this.coordinates.y });
+
+    // Left
+    for (i = -1; i >= -this.size; --i) {
         var x = this.coordinates.x + i;
         if (x >= 0 && x < this.world.width) {
+            if (this.world.grid[x][this.coordinates.y].type === "HardBlock") {
+                break;
+            }
             coords.push({ x: x, y: this.coordinates.y });
         }
     }
 
-    for (var j = -this.size; j <= this.size; ++j) {
-        var y = this.coordinates.y + j;
-        if (j !== 0 && y >= 0 && y < this.world.height) {
+    // Right
+    for (i = 1; i <= this.size; ++i) {
+        var x = this.coordinates.x + i;
+        if (x >= 0 && x < this.world.width) {
+            if (this.world.grid[x][this.coordinates.y].type === "HardBlock") {
+                break;
+            }
+            coords.push({ x: x, y: this.coordinates.y });
+        }
+    }
+
+    // Up
+    for (i = -1; i >= -this.size; --i) {
+        var y = this.coordinates.y + i;
+        if (y >= 0 && y < this.world.height) {
+            if (this.world.grid[this.coordinates.x][y].type === "HardBlock") {
+                break;
+            }
+            coords.push({ x: this.coordinates.x, y: y });
+        }
+    }
+
+    // Down
+    for (i = 1; i <= this.size; ++i) {
+        var y = this.coordinates.y + i;
+        if (y >= 0 && y < this.world.height) {
+            if (this.world.grid[this.coordinates.x][y].type === "HardBlock") {
+                break;
+            }
             coords.push({ x: this.coordinates.x, y: y });
         }
     }

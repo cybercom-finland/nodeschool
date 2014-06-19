@@ -79,6 +79,7 @@ function onConnection(socket) {
             // if not yet the turn of the (re)connected player
             var state = {
                 "turn": null,
+                "score": player.score,
                 "coordinates": player.coordinates,
                 "enemies": world.getEnemies(player.name),
                 "bombs": world.getBombs(),
@@ -174,6 +175,7 @@ function handlePlayerTurn(player) {
     // State contains the current turn and current world
     var state = {
         "turn": currentTurn,
+        "score": player.score,
         "coordinates": player.coordinates,
         "enemies": world.getEnemies(player.name),
         "bombs": world.getBombs(),
@@ -200,6 +202,15 @@ function handleBombTurn(bomb) {
         --bomb.owner.bombsDropped;
 
         var result = world.explodeBomb(bomb);
+
+        result.explodingPlayers.forEach(function(player) {
+            if (player === bomb.owner) {
+                bomb.owner.score -= 50;
+            } else {
+                bomb.owner.score += 100;
+            }
+        });
+        bomb.owner.score += result.explodingWalls.length * 10;
 
         console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
     } else {
