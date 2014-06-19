@@ -81,6 +81,7 @@ function onConnection(socket) {
                 "turn": null,
                 "coordinates": player.coordinates,
                 "enemies": world.getEnemies(player.name),
+                "bombs": world.getBombs(),
                 "world": world.grid
             }
             player.socket.emit("state", state);
@@ -158,39 +159,9 @@ function startNextTurn() {
         console.log("Queue: " + entityQueue);
 
         if (currentEntity instanceof Player) {
-            // State contains the current turn and current world
-            var state = {
-                "turn": currentTurn,
-                "coordinates": currentEntity.coordinates,
-                "enemies": world.getEnemies(currentEntity.name),
-                "world": world.grid
-            };
-
-            // Emit the current world state
-            currentEntity.socket.emit("state", state);
-
-            // Move this player to the back of the queue
-            entityQueue.moveFirstToBack();
-
-            // Wait for the answer
-            timeoutTimer = setTimeout(onTimeout, TIMEOUT);
-
+            handlePlayerTurn(currentEntity);
         } else if (currentEntity instanceof Bomb) {
-            // Decrease the bomb timer
-            --currentEntity.timer;
-            if (currentEntity.timer <= 0) {
-                // Remove the bomb from the queue
-                entityQueue.removeFirst();
-                --currentEntity.owner.bombsDropped;
-
-                console.log("Bomb dropped by a player " + currentEntity.owner + " exploded!");
-            } else {
-                // Move the bomb to the back of the queue
-                entityQueue.moveFirstToBack();
-            }
-
-            // Move to the next entity
-            nextTurn(DELAY);
+            handleBombTurn(currentEntity);
         }
     } else {
         // There are no connected players
@@ -199,29 +170,86 @@ function startNextTurn() {
     }
 }
 
+function handlePlayerTurn(player) {
+    // State contains the current turn and current world
+    var state = {
+        "turn": currentTurn,
+        "coordinates": player.coordinates,
+        "enemies": world.getEnemies(player.name),
+        "bombs": world.getBombs(),
+        "world": world.grid
+    };
+
+    // Emit the current world state
+    player.socket.emit("state", state);
+
+    // Move this player to the back of the queue
+    entityQueue.moveFirstToBack();
+
+    // Wait for the answer
+    timeoutTimer = setTimeout(onTimeout, TIMEOUT);
+}
+
+function handleBombTurn(bomb) {
+    // Decrease the bomb timer
+    --bomb.timer;
+
+    if (bomb.timer <= 0) {
+        // Remove the bomb from the queue
+        entityQueue.removeFirst();
+        --bomb.owner.bombsDropped;
+
+        var result = world.explodeBomb(bomb);
+
+        console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
+    } else {
+        // Move the bomb to the back of the queue
+        entityQueue.moveFirstToBack();
+
+        // Send information to the visualizer
+        visualizer.updateBomb(bomb.id, bomb.coordinates, bomb.timer);
+    }
+
+    // Move to the next entity
+    nextTurn(DELAY);
+}
+
 // Handles the response received from the current player
 function handleResponse(response) {
     console.log("Player " + currentEntity.name + " action: " + response.action);
 
     if (response.action === "BOMB") {
-        if (currentEntity.bombsDropped >= currentEntity.maxAllowedBombs) {
-            console.log("Player " + currentEntity.name + " has already dropped a maximum number of bombs.");
-        } else {
-            // Create a new bomb
-            var bomb = world.addBomb(currentEntity);
-            ++currentEntity.bombsDropped;
-
-            // Add the bomb to a queue
-            entityQueue.addPlayer(bomb);
-        }
+        addBomb(currentEntity);
     } else {
-        // Move the player
-        var newTileType = currentEntity.move(response.action);
-        if (newTileType === null) {
-            console.log("Player " + currentEntity.name + " is unable to move to that direction.");
-        } else {
-            // Send information to the visualizer
-            visualizer.movePlayer(currentEntity.name, currentEntity.coordinates);
-        }
+        movePlayer(currentEntity, response.action);
+    }
+}
+
+function addBomb(player) {
+    if (player.bombsDropped >= player.maxAllowedBombs) {
+        console.log("Player " + player + " has already dropped a maximum number of bombs.");
+    } else if (world.getBombByCoordinates(player.coordinates.x, player.coordinates.y) !== null) {
+        console.log("The tile already has a bomb.");
+    } else {
+        // Create a new bomb
+        var bomb = world.addBomb(player);
+        ++player.bombsDropped;
+
+        // Add the bomb to a queue
+        entityQueue.addPlayer(bomb);
+
+        // Send information to the visualizer
+        visualizer.addBomb(bomb.id, bomb.coordinates, bomb.timer);
+    }
+}
+
+function movePlayer(player, action) {
+    // Move the player
+    var ok = player.move(action);
+    if (!ok) {
+        console.log("Player " + player + " is unable to move to that direction.");
+    } else {
+        // Send information to the visualizer
+        visualizer.movePlayer(player.name, player.coordinates);
     }
 }

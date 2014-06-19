@@ -41,12 +41,22 @@ exports.run = function(address, port, name) {
                         } else if (data.coordinates.x === x && data.coordinates.y === y) {
                             line += clc.yellowBright("P");
                         } else {
+                            c = " ";
                             for (var i = 0; i < data.enemies.length; ++i) {
                                 if (data.enemies[i].coordinates.x === x && data.enemies[i].coordinates.y === y) {
                                     c = clc.yellowBright("E");
                                     break;
                                 }
                             }
+                            if (c === " ") {
+                                for (var i = 0; i < data.bombs.length; ++i) {
+                                    if (data.bombs[i].coordinates.x === x && data.bombs[i].coordinates.y === y) {
+                                        c = clc.redBright(data.bombs[i].timer);
+                                        break;
+                                    }
+                                }
+                            }
+
                             line += c;
                         }
                     }

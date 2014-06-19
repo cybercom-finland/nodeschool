@@ -7,7 +7,7 @@ function Entity(world) {
 
 Entity.prototype.move = function(direction) {
     if (!this.world) {
-        return null;
+        return false;
     }
 
     // Remember old coordinates
@@ -27,19 +27,19 @@ Entity.prototype.move = function(direction) {
         ++newX;
     } else {
         console.log("Unknown direction.");
-        return null;
+        return false;
     }
 
     // Make sure that the new coordinates are inside the world and that the tile is free
     if (!this.world.isInside(newX, newY) || !this.world.isFree(newX, newY)) {
-        return null;
+        return false;
     }
 
     // Move to the new coordinates
     this.coordinates.x = newX;
     this.coordinates.y = newY;
 
-    return this.world.grid[newX][newY].type;
+    return true;
 };
 
 module.exports = Entity;

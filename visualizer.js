@@ -43,3 +43,17 @@ exports.movePlayer = function(name, coords) {
         socket.emit("moveplayer", name, coords);
     });
 };
+
+// Sends information about a new bomb to visualizers
+exports.addBomb = function(id, coords, timer) {
+    watchers.forEach(function(socket) {
+        socket.emit("addbomb", id, coords, timer);
+    });
+}
+
+// Sends information about an updated bomb to visualizers
+exports.updateBomb = function(id, coords, timer) {
+    watchers.forEach(function(socket) {
+        socket.emit("updatebomb", id, coords, timer);
+    });
+}

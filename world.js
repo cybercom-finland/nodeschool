@@ -6,6 +6,8 @@ var Bomb = require("./bomb.js");
 var HEIGHT = 20;
 var WIDTH = 40;
 
+var bombCounter = 0;
+
 // Constructor for World object
 //
 // Initial list of basic characters that can be used demonstrating the world,
@@ -43,7 +45,7 @@ function World() {
     }
 
     this.players = {};
-    this.bombs = [];
+    this.bombs = {};
 }
 
 World.prototype.getRandomItem = function() {
@@ -95,10 +97,13 @@ World.prototype.getPlayer = function(name) {
 }
 
 World.prototype.addBomb = function(player) {
-    var bomb = new Bomb(5, player, this);
+    var bomb = new Bomb(5, 2, player, this);
     bomb.coordinates.x = player.coordinates.x;
     bomb.coordinates.y = player.coordinates.y;
-    this.bombs.push(bomb);
+    bomb.id = bombCounter;
+
+    this.bombs[bombCounter] = bomb;
+    ++bombCounter;
 
     return bomb;
 }
@@ -119,6 +124,21 @@ World.prototype.getEnemies = function(name) {
     return enemies;
 }
 
+// Returns coordinates and a timer of all bombs
+World.prototype.getBombs = function() {
+    var self = this;
+    var bombs = [];
+
+    Object.keys(this.bombs).forEach(function(bombId) {
+        bombs.push({
+            "coordinates": self.bombs[bombId].coordinates,
+            "timer": self.bombs[bombId].timer
+        });
+    });
+
+    return bombs;
+}
+
 // Checks if the coordinates are inside the world
 World.prototype.isInside = function(x, y) {
     return x >= 0 && y >= 0 && x < this.width && y < this.height;
@@ -126,24 +146,77 @@ World.prototype.isInside = function(x, y) {
 
 // Checks if the tile is free
 World.prototype.isFree = function(x, y) {
-    var self = this;
     var tileType = this.grid[x][y].type;
     var free = true;
 
-    if (tileType === "HardBlock" || tileType === "SoftBlock") {
+    if (tileType === "HardBlock" || tileType === "SoftBlock" ||
+        this.getPlayerByCoordinates(x, y) !== null || this.getBombByCoordinates(x, y) !== null) {
         // Tile is not free
         free = false;
-    } else {
-        // Check whether the tile is occupied by another player
-        Object.keys(this.players).forEach(function(name) {
-            var player = self.players[name];
-            if (player.coordinates.x === x && player.coordinates.y === y) {
-                free = false;
-            }
-        });
     }
 
     return free;
 };
+
+World.prototype.getBombByCoordinates = function(x, y) {
+    var bombIds = Object.keys(this.bombs);
+
+    for (var i = 0; i < bombIds.length; ++i) {
+        var bomb = this.bombs[bombIds[i]];
+        if (bomb.coordinates.x === x && bomb.coordinates.y === y) {
+            return bomb;
+        }
+    }
+
+    return null;
+}
+
+World.prototype.getPlayerByCoordinates = function(x, y) {
+    var playerIds = Object.keys(this.players);
+
+    for (var i = 0; i < playerIds.length; ++i) {
+        var player = this.players[playerIds[i]];
+        if (player.coordinates.x === x && player.coordinates.y === y) {
+            return player;
+        }
+    }
+
+    return null;
+}
+
+World.prototype.explodeBomb = function(bomb) {
+    var self = this;
+    var explodingTiles = bomb.getExplodingCoordinates();
+
+    var explodingWalls = [];
+    var explodingPlayers = [];
+    var explodingBombs = [];
+
+    explodingTiles.forEach(function(c) {
+        if (self.grid[c.x][c.y].type === "SoftBlock") {
+            self.grid[c.x][c.y] = new Item.OpenSpaceItem();
+            explodingWalls.push(c);
+        }
+
+        var player = self.getPlayerByCoordinates(c.x, c.y);
+        if (player !== null) {
+            explodingPlayers.push(player);
+        }
+
+        var bomb = self.getBombByCoordinates(c.x, c.y);
+        if (bomb !== null) {
+            explodingBombs.push(bomb);
+        }
+    });
+
+    delete this.bombs[bomb.id];
+
+    return {
+        explodingTiles: explodingTiles,
+        explodingWalls: explodingWalls,
+        explodingPlayers: explodingPlayers,
+        explodingBombs: explodingBombs
+    };
+}
 
 module.exports = World;
