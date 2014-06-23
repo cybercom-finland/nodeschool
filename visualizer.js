@@ -57,3 +57,17 @@ exports.updateBomb = function(id, coords, timer) {
         socket.emit("updatebomb", id, coords, timer);
     });
 }
+
+// Sends information about player death to visualizers
+exports.playerDeath = function(name) {
+    watchers.forEach(function(socket) {
+        socket.emit("playerdeath", name);
+    });
+}
+
+// Sends information about player rebirth to visualizers
+exports.playerRespawn = function(name, coords) {
+    watchers.forEach(function(socket) {
+        socket.emit("playerrespawn", name, coords);
+    });
+}

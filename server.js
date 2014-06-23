@@ -172,24 +172,43 @@ function startNextTurn() {
 }
 
 function handlePlayerTurn(player) {
-    // State contains the current turn and current world
-    var state = {
-        "turn": currentTurn,
-        "score": player.score,
-        "coordinates": player.coordinates,
-        "enemies": world.getEnemies(player.name),
-        "bombs": world.getBombs(),
-        "world": world.grid
-    };
+    // Check whether the player is alive or not
+    if (player.turnsToRespawn === 0) {
+        // State contains the current turn and current world
+        var state = {
+            "turn": currentTurn,
+            "score": player.score,
+            "coordinates": player.coordinates,
+            "enemies": world.getEnemies(player.name),
+            "bombs": world.getBombs(),
+            "world": world.grid
+        };
 
-    // Emit the current world state
-    player.socket.emit("state", state);
+        // Emit the current world state
+        player.socket.emit("state", state);
 
-    // Move this player to the back of the queue
-    entityQueue.moveFirstToBack();
+        // Move this player to the back of the queue
+        entityQueue.moveFirstToBack();
 
-    // Wait for the answer
-    timeoutTimer = setTimeout(onTimeout, TIMEOUT);
+        // Wait for the answer
+        timeoutTimer = setTimeout(onTimeout, TIMEOUT);
+    } else {
+        --player.turnsToRespawn;
+
+        if (player.turnsToRespawn === 0) {
+            player.coordinates = world.getStartPointForNewPlayer();
+            console.log("Player " + player + " respawned.");
+
+            // Send information to the visualizer
+            visualizer.playerRespawn(player.name);
+        }
+
+        // Move this player to the back of the queue
+        entityQueue.moveFirstToBack();
+
+        // Move to the next player
+        nextTurn(DELAY);
+    }
 }
 
 function handleBombTurn(bomb) {
@@ -197,6 +216,8 @@ function handleBombTurn(bomb) {
     --bomb.timer;
 
     if (bomb.timer <= 0) {
+        console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
+
         // Remove the bomb from the queue
         entityQueue.removeFirst();
         --bomb.owner.bombsDropped;
@@ -209,10 +230,17 @@ function handleBombTurn(bomb) {
             } else {
                 bomb.owner.score += 100;
             }
+
+            // Player dies
+            player.coordinates.x = -1;
+            player.coordinates.y = -1;
+            player.turnsToRespawn = 5;
+            console.log("Player " + player + " dies!");
+
+            // Send information to the visualizer
+            visualizer.playerDeath(player.name);
         });
         bomb.owner.score += result.explodingWalls.length * 10;
-
-        console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
     } else {
         // Move the bomb to the back of the queue
         entityQueue.moveFirstToBack();

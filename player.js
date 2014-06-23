@@ -11,6 +11,7 @@ function Player(name, socket, world) {
     this.bombsDropped = 0;
     this.maxAllowedBombs = 1;
     this.score = 0;
+    this.turnsToRespawn = 0;
 };
 
 Player.prototype.toString = function() {
