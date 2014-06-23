@@ -2,9 +2,11 @@ var Item = require("./item.js");
 var Player = require("./player.js");
 var Bomb = require("./bomb.js");
 
+var clc = require("cli-color");
+
 // World size as tiles (not pixels)
-var HEIGHT = 20;
-var WIDTH = 40;
+var HEIGHT = 19;
+var WIDTH = 39;
 
 var bombCounter = 0;
 
@@ -30,23 +32,95 @@ function World() {
     this.height = HEIGHT;
     console.log("Creating world with " + this.width + "x" + this.height + " tiles");
 
+    // Create an empty world surrounded by borders
     this.grid = new Array(this.width);
     for (var x = 0; x < this.width; x++) {
         this.grid[x] = new Array(this.height);
         for (var y = 0; y < this.height; y++) {
-            // Initialize the world with borders
             if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
                 this.grid[x][y] = new Item.HardBlockItem();
-            } else {
-                // Other tiles are generated randomly for now
-                this.grid[x][y] = this.getRandomItem();
             }
         }
     }
 
+    this.addStaticItemsToWorld();
+
     this.players = {};
     this.bombs = {};
 }
+
+World.prototype.addStaticItemsToWorld = function() {
+
+    // Create "bomberman level 1" like world having hard blocks at (evenX, evenY) coordinates
+    for (var x = 1; x < this.width - 1; x++) {
+        for (var y = 1; y < this.height - 1; y++) {
+            if (x % 2 || y % 2 || x === (this.width - 2) || y === (this.height - 2)) {
+                this.grid[x][y] = new Item.OpenSpaceItem();
+            } else {
+                this.grid[x][y] = new Item.HardBlockItem();
+            }
+        }
+    }
+
+    // Add soft blocks to random free tiles
+    this.addSoftBlocks();
+
+    //console.log(JSON.stringify(this.grid))
+    console.log("World:");
+    for (var y = 0; y < this.grid[0].length; y++) {
+        var line = "    ";
+        for (var x = 0; x < this.grid.length; x++) {
+            var c = this.grid[x][y].value;
+            if (c === "#") {
+                line += c;
+            } else if (c === "X") {
+                line += clc.blackBright(c);
+            } else {
+                line += " ";
+            }
+        }
+        console.log(line);
+    }
+
+}
+
+// Adds hard blocks to the empty world
+World.prototype.addHardBlocks = function() {
+    for (var x = 1; x < this.width - 1; x++) {
+        for (var y = 1; y < this.height - 1; y++) {
+            var random = Math.random();
+            if (random < 0.2) {
+                this.grid[x][y] = new Item.HardBlockItem();
+                //console.log("Hard Block at [" + x + "][" + y + "]");
+            }
+        }
+    }
+};
+
+// Adds soft blocks to the grid having hard blocks inserted
+World.prototype.addSoftBlocks = function() {
+    // The soft blocks are added to random free spaces with the following rules:
+    // - The world is divided into 5 x 5 "grids"
+    // - Every other grid to both directions (3 x 3) have more open space having 0.1 probability of Soft Blocks
+    //   - These areas can be considered as good starting points (at least in the beginning of the game)
+    // - The rest of the world has 0.7 probability of Soft Blocks
+    var lowLevel = 0.1;
+    var highLevel = 0.7;
+    for (var x = 1; x < this.width - 1; x++) {
+        for (var y = 1; y < this.height - 1; y++) {
+            var random = Math.random();
+            var randomLevel = highLevel;
+            if ((x < (this.width * 0.2) || x > (this.width * 0.8) || (x > (this.width * 0.4) && x < (this.width * 0.6))) &&
+                (y < (this.height * 0.2) || y > (this.height * 0.8) || (y > (this.height * 0.4) && y < (this.height * 0.6)))) {
+                randomLevel = lowLevel;
+            }
+            if (random < randomLevel && this.isFree(x, y)) {
+                this.grid[x][y] = new Item.SoftBlockItem();
+                //console.log("Soft Block at [" + x + "][" + y + "]");
+            }
+        }
+    }
+};
 
 World.prototype.getRandomItem = function() {
     var random = Math.random();
@@ -159,6 +233,10 @@ World.prototype.isFree = function(x, y) {
 };
 
 World.prototype.getBombByCoordinates = function(x, y) {
+    if (!this.bombs) {
+        return null;
+    }
+
     var bombIds = Object.keys(this.bombs);
 
     for (var i = 0; i < bombIds.length; ++i) {
@@ -172,6 +250,10 @@ World.prototype.getBombByCoordinates = function(x, y) {
 }
 
 World.prototype.getPlayerByCoordinates = function(x, y) {
+    if (!this.players) {
+        return null;
+    }
+
     var playerIds = Object.keys(this.players);
 
     for (var i = 0; i < playerIds.length; ++i) {
