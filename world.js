@@ -45,8 +45,10 @@ function World() {
 
     this.addStaticItemsToWorld();
 
+    this.playerCount = 0;
     this.players = {};
     this.bombs = {};
+    this.nextStartPoint = 1;
 }
 
 World.prototype.addStaticItemsToWorld = function() {
@@ -133,16 +135,83 @@ World.prototype.getRandomItem = function() {
     }
 }
 
-// Gets start point for a new player
+// Gets a peaceful start point for new (reborn) player
+// The world is separated into 5x5 grid,
+// having 3x3 areas for start point candidates.
+// The peaceful start points are searched in the following order:
 //
-// Note: Coordinates are currently got randomly,
-// probably some (more) AI is needed, to get a "peaceful" startup
-// (not next to another player or exploding bomb etc)
+//     1 5 2
+//
+//     6 9 7
+//
+//     3 8 4
+//
+World.prototype.getPeacefulStartPoint = function(name) {
+    console.log("getPeacefulStartPoint(" + this.nextStartPoint + ")");
+    var randomX = Math.floor((Math.random() * (this.width - 1)) + 1);
+    var randomY = Math.floor((Math.random() * (this.height - 1)) + 1);
+    if (this.nextStartPoint === 1) {
+        // Upper left corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+    } else if (this.nextStartPoint === 2) {
+        // Upper right corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+    } else if (this.nextStartPoint === 3) {
+        // Lower left corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+    } else if (this.nextStartPoint === 4) {
+        // Lower right corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+    } else if (this.nextStartPoint === 5) {
+        // Upper right corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+    } else if (this.nextStartPoint === 6) {
+        // Lower left corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+    } else if (this.nextStartPoint === 7) {
+        // Lower right corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+    } else if (this.nextStartPoint === 8) {
+        // Lower left corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+    } else if (this.nextStartPoint === 9) {
+        // Lower right corner
+        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+    }
+    console.log("[" + randomX + "][" + randomY + "]");
+    if (!this.isFree(randomX, randomY)) {
+        return this.getPeacefulStartPoint(name);
+    }
+    if (!this.isPeaceful(randomX, randomY, name)) {
+        this.nextStartPoint++;
+        if (this.nextStartPoint === 10) {
+            this.nextStartPoint = 1;
+        }
+        return this.getPeacefulStartPoint(name);
+    }
 
-World.prototype.getStartPointForNewPlayer = function() {
-    // Get random coordinates between the borders (1..length-1)
-    var randomX = Math.floor(Math.random() * (this.width - 1) + 1);
-    var randomY = Math.floor(Math.random() * (this.height - 1) + 1);
+    this.nextStartPoint++;
+    if (this.nextStartPoint === 10) {
+        this.nextStartPoint = 1;
+    }
+    return [randomX, randomY];
+}
+
+// Gets start point for a new player
+World.prototype.getStartPointForNewPlayer = function(name) {
+    var startPoint = this.getPeacefulStartPoint(name);
+    console.log(JSON.stringify(startPoint));
+    var randomX = startPoint[0];
+    var randomY = startPoint[1];
     console.log("Random point: [" + randomX + "][" + randomY + "]");
     console.log("State: " + this.grid[randomX][randomY].value);
     if (this.grid[randomX][randomY] && this.grid[randomX][randomY].value === ' ') {
@@ -152,15 +221,16 @@ World.prototype.getStartPointForNewPlayer = function() {
         }
     } else {
         // If invalid or reserved point, call this recursively
-        return this.getStartPointForNewPlayer();
+        return this.getStartPointForNewPlayer(name);
     }
 }
 
 // Creates a new player and returns it
 World.prototype.addPlayer = function(name, socket) {
     var player = new Player(name, socket, this);
-    player.coordinates = this.getStartPointForNewPlayer();
+    player.coordinates = this.getStartPointForNewPlayer(name);
     this.players[name] = player;
+    this.playerCount++;
 
     return player;
 }
@@ -230,6 +300,31 @@ World.prototype.isFree = function(x, y) {
     }
 
     return free;
+};
+
+// Checks if the tile is "peaceful" (e.g. for startup)
+World.prototype.isPeaceful = function(x, y, name) {
+    var enemies = this.getEnemies(name);
+    var bombs = this.getBombs();
+
+    for (var i = 0; i < enemies.length; i++) {
+        var xDiff = Math.abs(x - enemies[i].coordinates.x);
+        var yDiff = Math.abs(y - enemies[i].coordinates.y);
+        if (xDiff < 3 && yDiff < 3) {
+            console.log("An enemy is too close");
+            return false;
+        }
+    }
+    for (i = 0; i < bombs.length; i++) {
+        var xDiff = Math.abs(x - bombs[i].coordinates.x);
+        var yDiff = Math.abs(y - bombs[i].coordinates.y);
+        if (xDiff < 3 && yDiff < 3) {
+            console.log("A bomb is too close");
+            return false;
+        }
+    }
+
+    return true;
 };
 
 World.prototype.getBombByCoordinates = function(x, y) {
