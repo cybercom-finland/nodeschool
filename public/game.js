@@ -7,14 +7,16 @@ var height;
 var game;
 var tilemap;
 
+var TILESIZE = 16;
+
 // Scaling factor for scaling the graphics
 var SCALE = 2;
 // Game world coordinates to separate the actual game area from the background
 var GAME_WORLD = {
     offsetX: 20,
     offsetY: 72,
-    width: 39 * 16 * SCALE,
-    height: 19 * 16 * SCALE
+    width: 39 * TILESIZE * SCALE,
+    height: 19 * TILESIZE * SCALE
 };
 // Indexes of textures in the sprite sheet (atlas)
 var TEXTURES = {
@@ -40,7 +42,7 @@ var TEXTURES = {
 };
 
 function addSprite(x, y, idxTexture, flip) {
-    var sprite = game.add.sprite(x * 16 * SCALE + GAME_WORLD.offsetX, y * 16 * SCALE + GAME_WORLD.offsetY, "bomber_atlas", idxTexture);
+    var sprite = game.add.sprite(x * TILESIZE * SCALE + GAME_WORLD.offsetX, y * TILESIZE * SCALE + GAME_WORLD.offsetY, "bomber_atlas", idxTexture);
     sprite.scale.setTo(SCALE, SCALE);
     sprite.smoothed = false;
 
@@ -53,12 +55,12 @@ function onWorldState(state) {
     width = state.length;
     height = state[0].length;
 
-    var layerStatic = tilemap.create("static", width, height, 16, 16);
+    var layerStatic = tilemap.create("static", width, height, TILESIZE, TILESIZE);
     layerStatic.scale = { x: SCALE, y: SCALE };
     layerStatic.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
     layerStatic.smoothed = false;
 
-    var layerWalls = tilemap.createBlankLayer("walls", width, height, 16, 16);
+    var layerWalls = tilemap.createBlankLayer("walls", width, height, TILESIZE, TILESIZE);
     layerWalls.scale = { x: SCALE, y: SCALE };
     layerWalls.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
     layerWalls.smoothed = false;
@@ -93,8 +95,8 @@ function onMovePlayer(name, coords) {
 
     var oldX = sprite.x;
     var oldY = sprite.y;
-    sprite.x = coords.x * 16 * SCALE + GAME_WORLD.offsetX;
-    sprite.y = coords.y * 16 * SCALE + GAME_WORLD.offsetY;
+    sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
+    sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
 
     var flip = false;
 
@@ -124,8 +126,8 @@ function onPlayerDeath(name) {
 
 function onPlayerRespawn(name, coords) {
     players[name].visible = true;
-    players[name].x = coords.x * 16 * SCALE + GAME_WORLD.offsetX;
-    players[name].y = coords.y * 16 * SCALE + GAME_WORLD.offsetY;
+    players[name].x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
+    players[name].y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
 }
 
 function onAddbomb(id, coords, timer) {
@@ -137,6 +139,7 @@ function onAddbomb(id, coords, timer) {
 }
 
 function onUpdateBomb(id, coords, timer) {
+    // Do nothing
 }
 
 function onBombExplosion(id, data) {
@@ -161,7 +164,7 @@ function preload() {
 
 function create() {
     tilemap = game.add.tilemap();
-    tilemap.addTilesetImage("tiles", "bomber_atlas", 16, 16);
+    tilemap.addTilesetImage("tiles", "bomber_atlas", TILESIZE, TILESIZE);
 
     game.stage.setBackgroundColor(0xC0C0C0);
     game.stage.disableVisibilityChange = true;
@@ -177,7 +180,7 @@ function create() {
 
     // Add support to full screen mode
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
-    //game.input.onDown.add(goFull, this);
+    game.input.onDown.add(goFull, this);
 }
 
 function goFull() {
@@ -187,7 +190,7 @@ function goFull() {
 window.onload = function() {
     var socket = io.connect();
 
-    game = new Phaser.Game(40 + GAME_WORLD.width, 200 + GAME_WORLD.height, Phaser.AUTO, "game", {
+    game = new Phaser.Game(2 * GAME_WORLD.offsetX + GAME_WORLD.width, GAME_WORLD.offsetY + 150 + GAME_WORLD.height, Phaser.AUTO, "game", {
         preload: preload,
         create: create
     });

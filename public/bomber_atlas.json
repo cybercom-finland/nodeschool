@@ -176,14 +176,5 @@
             "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
             "sourceSize": {"w":16,"h":16}
         }
-    ],
-    "meta": {
-        "app": "http://www.codeandweb.com/texturepacker ",
-        "version": "1.0",
-        "image": "bomb_party_v4.png",
-        "format": "RGBA8888",
-        "size": {"w":240,"h":304},
-        "scale": "2",
-        "smartupdate": "$TexturePacker:SmartUpdate:e5b4b12fba470b8ec789ca1bc7d13108:e4f4a916ca759434f4f40b8eb634b7fc:9be8c185d95a5be4a06ec0067a3d8380$"
-    }
+    ]
 }
