@@ -13,8 +13,8 @@ var SCALE = 2;
 var GAME_WORLD = {
     offsetX: 20,
     offsetY: 72,
-    width: 640 * SCALE,
-    height: 320 * SCALE
+    width: 39 * 16 * SCALE,
+    height: 19 * 16 * SCALE
 };
 // Indexes of textures in the sprite sheet (atlas)
 var TEXTURES = {
