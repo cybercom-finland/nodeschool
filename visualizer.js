@@ -10,6 +10,10 @@ exports.addWatcher = function(socket, world) {
     Object.keys(world.players).forEach(function(name) {
         socket.emit("addplayer", name, world.players[name].coordinates);
     });
+
+    Object.keys(world.bombs).forEach(function(id) {
+        socket.emit("addbomb", id, world.bombs[id].coordinates, world.bombs[id].timer);
+    });
 };
 
 exports.removeWatcher = function(socket) {
@@ -55,6 +59,13 @@ exports.addBomb = function(id, coords, timer) {
 exports.updateBomb = function(id, coords, timer) {
     watchers.forEach(function(socket) {
         socket.emit("updatebomb", id, coords, timer);
+    });
+}
+
+// Sends information about an exploded bomb to visualizers
+exports.bombExplosion = function(id, data) {
+    watchers.forEach(function(socket) {
+        socket.emit("bombexplosion", id, data);
     });
 }
 

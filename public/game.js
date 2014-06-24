@@ -1,16 +1,18 @@
 var players = {};
-var world = {};
+var bombs = {};
+
 var width;
 var height;
 
 var game;
+var tilemap;
 
 // Scaling factor for scaling the graphics
 var SCALE = 2;
 // Game world coordinates to separate the actual game area from the background
 var GAME_WORLD = {
-    x: 20,
-    y: 72,
+    offsetX: 20,
+    offsetY: 72,
     width: 640 * SCALE,
     height: 320 * SCALE
 };
@@ -38,61 +40,119 @@ var TEXTURES = {
 };
 
 function addSprite(x, y, idxTexture, flip) {
-    var sprite = game.add.sprite(x * 16 * SCALE + GAME_WORLD.x, y * 16 * SCALE + GAME_WORLD.y, "bomber_atlas", idxTexture);
-    if (flip) {
-        sprite.anchor.setTo(1, 0);
-    }
+    var sprite = game.add.sprite(x * 16 * SCALE + GAME_WORLD.offsetX, y * 16 * SCALE + GAME_WORLD.offsetY, "bomber_atlas", idxTexture);
     sprite.scale.setTo(SCALE, SCALE);
-    if (flip) {
-        sprite.scale.x *= -1;
-    }
+    sprite.smoothed = false;
+
+    return sprite;
 }
 
 function onWorldState(state) {
     console.log(state);
-    world = state;
+
     width = state.length;
     height = state[0].length;
 
+    var layerStatic = tilemap.create("static", width, height, 16, 16);
+    layerStatic.scale = { x: SCALE, y: SCALE };
+    layerStatic.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
+    layerStatic.smoothed = false;
+
+    var layerWalls = tilemap.createBlankLayer("walls", width, height, 16, 16);
+    layerWalls.scale = { x: SCALE, y: SCALE };
+    layerWalls.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
+    layerWalls.smoothed = false;
+
     for (var y = 0; y < height; y++) {
         for (var x = 0; x < width; x++) {
-            addSprite(x, y, TEXTURES.OpenSpace);
-            if (world[x][y].type === "HardBlock") {
-                addSprite(x, y, TEXTURES.HardBlock);
-            } else if (world[x][y].type === "SoftBlock") {
-                addSprite(x, y, TEXTURES.SoftBlock);
+            if (state[x][y].type === "HardBlock") {
+                tilemap.putTile(280, x, y, layerStatic); // Hard block
+            } else if (state[x][y].type === "SoftBlock") {
+                tilemap.putTile(196, x, y, layerStatic); // Empty space
+                tilemap.putTile(204, x, y, layerWalls); // Soft block
+            } else {
+                tilemap.putTile(196, x, y, layerStatic); // Empty space
             }
         }
     }
 }
 
 function onAddPlayer(name, coords) {
-    console.log("Player", name, "added:", coords.x, coords.y);
-    players[name] = {
-        x: coords.x,
-        y: coords.y
-    };
-    addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
+    var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
+
+    players[name] = sprite;
+
+    if (sprite.x < 0 || sprite.y < 0) {
+        // The player is not alive
+        sprite.visible = false;
+    }
 }
 
 function onMovePlayer(name, coords) {
-    console.log("Player", name, "moved:", players[name].x, players[name].y, "->", coords.x, coords.y);
+    var sprite = players[name];
 
-    addSprite(players[name].x, players[name].y, TEXTURES.OpenSpace);
+    var oldX = sprite.x;
+    var oldY = sprite.y;
+    sprite.x = coords.x * 16 * SCALE + GAME_WORLD.offsetX;
+    sprite.y = coords.y * 16 * SCALE + GAME_WORLD.offsetY;
 
-    if (players[name].x < coords.x) {
-        addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight);
-    } else if (players[name].x > coords.x) {
-        var flip = true;
-        addSprite(coords.x, coords.y, TEXTURES.Player1FaceRight, flip);
-    } else if (players[name].y < coords.y) {
-        addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
+    var flip = false;
+
+    if (oldX < sprite.x) {
+        sprite.frame = TEXTURES.Player1FaceRight;
+    } else if (oldX > sprite.x) {
+        sprite.frame = TEXTURES.Player1FaceLeft;
+        flip = true;
+    } else if (oldY < sprite.y) {
+        sprite.frame = TEXTURES.Player1FaceDown;
     } else {
-        addSprite(coords.x, coords.y, TEXTURES.Player1FaceUp);
+        sprite.frame = TEXTURES.Player1FaceUp;
     }
 
-    players[name].x = coords.x;
-    players[name].y = coords.y;
+    if (flip) {
+        sprite.anchor.setTo(1, 0);
+        sprite.scale.x = -SCALE;
+    } else {
+        sprite.anchor.setTo(0, 0);
+        sprite.scale.x = SCALE;
+    }
+}
+
+function onPlayerDeath(name) {
+    players[name].visible = false;
+}
+
+function onPlayerRespawn(name, coords) {
+    players[name].visible = true;
+    players[name].x = coords.x * 16 * SCALE + GAME_WORLD.offsetX;
+    players[name].y = coords.y * 16 * SCALE + GAME_WORLD.offsetY;
+}
+
+function onAddbomb(id, coords, timer) {
+    var sprite = addSprite(coords.x, coords.y, TEXTURES.Bomb0);
+    sprite.animations.add("bomb", [7, 8, 9, 10, 11, 12, 11, 10, 9, 8], 10, true);
+    sprite.play("bomb");
+
+    bombs[id] = sprite;
+}
+
+function onUpdateBomb(id, coords, timer) {
+}
+
+function onBombExplosion(id, data) {
+    bombs[id].destroy();
+
+    // Remove destroyed walls
+    data.explodingWalls.forEach(function(c) {
+        tilemap.removeTile(c.x, c.y, "walls");
+    });
+
+    // Add explosion animations
+    data.explodingTiles.forEach(function(c) {
+        var sprite = addSprite(c.x, c.y, "explosion_1");
+        sprite.animations.add("explosion", ["explosion_1", "explosion_2", "explosion_3", "explosion_2", "explosion_1"]);
+        sprite.play("explosion", 10, false, true);
+    });
 }
 
 function preload() {
@@ -100,7 +160,12 @@ function preload() {
 }
 
 function create() {
+    tilemap = game.add.tilemap();
+    tilemap.addTilesetImage("tiles", "bomber_atlas", 16, 16);
+
     game.stage.setBackgroundColor(0xC0C0C0);
+    game.stage.disableVisibilityChange = true;
+
     // Add title text to canvas
     var text = "Hack-a-Node";
     var style = {
@@ -112,7 +177,7 @@ function create() {
 
     // Add support to full screen mode
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
-    game.input.onDown.add(goFull, this);
+    //game.input.onDown.add(goFull, this);
 }
 
 function goFull() {
@@ -133,4 +198,9 @@ window.onload = function() {
     socket.on("worldstate", onWorldState);
     socket.on("addplayer", onAddPlayer);
     socket.on("moveplayer", onMovePlayer);
+    socket.on("playerdeath", onPlayerDeath);
+    socket.on("playerrespawn", onPlayerRespawn);
+    socket.on("addbomb", onAddbomb);
+    socket.on("updatebomb", onUpdateBomb);
+    socket.on("bombexplosion", onBombExplosion);
 };

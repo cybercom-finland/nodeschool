@@ -200,12 +200,12 @@ World.prototype.explodeBomb = function(bomb) {
 
         var player = self.getPlayerByCoordinates(c.x, c.y);
         if (player !== null) {
-            explodingPlayers.push(player);
+            explodingPlayers.push(player.name);
         }
 
         var bomb = self.getBombByCoordinates(c.x, c.y);
         if (bomb !== null) {
-            explodingBombs.push(bomb);
+            explodingBombs.push(bomb.id);
         }
     });
 

@@ -8,7 +8,7 @@ function Bomb(timer, size, owner, world) {
     this.timer = timer;
     this.connected = true;
     this.owner = owner;
-    this.size = 5;
+    this.size = size;
 };
 
 Bomb.prototype.getExplodingCoordinates = function() {

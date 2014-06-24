@@ -151,6 +151,30 @@
             "trimmed": false,
             "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
             "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "explosion_1",
+            "frame": {"x":224,"y":256,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "explosion_2",
+            "frame": {"x":224,"y":272,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
+        },
+        {
+            "filename": "explosion_3",
+            "frame": {"x":224,"y":288,"w":16,"h":16},
+            "rotated": false,
+            "trimmed": false,
+            "spriteSourceSize": {"x":0,"y":0,"w":16,"h":16},
+            "sourceSize": {"w":16,"h":16}
         }
     ],
     "meta": {
