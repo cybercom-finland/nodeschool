@@ -7,6 +7,7 @@ var height;
 var game;
 var tilemap;
 
+// Tile size in pixels
 var TILESIZE = 16;
 
 // Scaling factor for scaling the graphics
@@ -41,6 +42,13 @@ var TEXTURES = {
     Bomb0Down: 18
 };
 
+// Player colors
+var COLORS = [ 0xF08080, 0x90EE90, 0x87CEFA, 0xF0E68C ];
+
+var PLAYER_CARD_WIDTH = 150;
+var BOMB_CARD_WIDTH = 50;
+var CARD_HEIGHT = 100;
+
 function addSprite(x, y, idxTexture, flip) {
     var sprite = game.add.sprite(x * TILESIZE * SCALE + GAME_WORLD.offsetX, y * TILESIZE * SCALE + GAME_WORLD.offsetY, "bomber_atlas", idxTexture);
     sprite.scale.setTo(SCALE, SCALE);
@@ -50,8 +58,6 @@ function addSprite(x, y, idxTexture, flip) {
 }
 
 function onWorldState(state) {
-    console.log(state);
-
     width = state.length;
     height = state[0].length;
 
@@ -82,7 +88,44 @@ function onWorldState(state) {
 function onAddPlayer(name, coords) {
     var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
 
-    players[name] = sprite;
+    var card;
+    card = game.add.group();
+    card.visible = false;
+
+    var color;
+    if (Object.keys(players).length < COLORS.length) {
+        color = COLORS[Object.keys(players).length];
+    } else {
+        color = 0xEEEEEE;
+    }
+
+    var box = game.add.graphics(0, 0);
+    box.beginFill(color);
+    box.lineStyle(3, 0x000000, 1);
+    box.drawRect(0, 0, PLAYER_CARD_WIDTH, CARD_HEIGHT);
+
+    var cross = game.add.graphics(0, 0);
+    cross.beginFill(0x000000, 1);
+    cross.lineStyle(20, 0x000000, 1);
+    cross.moveTo(15, 15);
+    cross.lineTo(PLAYER_CARD_WIDTH - 15, CARD_HEIGHT - 15);
+    cross.moveTo(PLAYER_CARD_WIDTH - 15, 15);
+    cross.lineTo(15, CARD_HEIGHT - 15);
+
+    var nameItem = game.add.text(10, 10, name, { font: "bold 20px Arial", fill: "#000000" });
+    var scoreItem = game.add.text(10, 45, "0", { font: "bold 24px Arial", fill: "#000000" });
+
+    card.add(box);
+    card.add(nameItem);
+    card.add(scoreItem);
+    card.add(cross);
+
+    players[name] = {
+        sprite: sprite,
+        card: card,
+        scoreItem: scoreItem,
+        cross: cross
+    };
 
     if (sprite.x < 0 || sprite.y < 0) {
         // The player is not alive
@@ -91,7 +134,7 @@ function onAddPlayer(name, coords) {
 }
 
 function onMovePlayer(name, coords) {
-    var sprite = players[name];
+    var sprite = players[name].sprite;
 
     var oldX = sprite.x;
     var oldY = sprite.y;
@@ -121,13 +164,17 @@ function onMovePlayer(name, coords) {
 }
 
 function onPlayerDeath(name) {
-    players[name].visible = false;
+    players[name].sprite.visible = false;
 }
 
 function onPlayerRespawn(name, coords) {
-    players[name].visible = true;
-    players[name].x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
-    players[name].y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+    players[name].sprite.visible = true;
+    players[name].sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
+    players[name].sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+}
+
+function onPlayerDisconnect(name) {
+    players[name].card.visible = false;
 }
 
 function onAddbomb(id, coords, timer) {
@@ -135,7 +182,25 @@ function onAddbomb(id, coords, timer) {
     sprite.animations.add("bomb", [7, 8, 9, 10, 11, 12, 11, 10, 9, 8], 10, true);
     sprite.play("bomb");
 
-    bombs[id] = sprite;
+    var card;
+    card = game.add.group();
+    card.visible = false;
+
+    var box = game.add.graphics(0, 0);
+    box.beginFill(0x666666);
+    box.lineStyle(3, 0x000000, 1);
+    box.drawRect(0, 0, BOMB_CARD_WIDTH, CARD_HEIGHT);
+
+    var timerItem = game.add.text(18, 35, "0", { font: "bold 24px Arial", fill: "#000000" });
+
+    card.add(box);
+    card.add(timerItem);
+
+    bombs[id] = {
+        sprite: sprite,
+        card: card,
+        timerItem: timerItem
+    };
 }
 
 function onUpdateBomb(id, coords, timer) {
@@ -143,7 +208,9 @@ function onUpdateBomb(id, coords, timer) {
 }
 
 function onBombExplosion(id, data) {
-    bombs[id].destroy();
+    bombs[id].sprite.destroy();
+    bombs[id].card.destroy();
+    delete bombs[id];
 
     // Remove destroyed walls
     data.explodingWalls.forEach(function(c) {
@@ -155,6 +222,29 @@ function onBombExplosion(id, data) {
         var sprite = addSprite(c.x, c.y, "explosion_1");
         sprite.animations.add("explosion", ["explosion_1", "explosion_2", "explosion_3", "explosion_2", "explosion_1"]);
         sprite.play("explosion", 10, false, true);
+    });
+}
+
+function onEntityQueue(queue) {
+    var card;
+    var x = GAME_WORLD.offsetX;
+
+    queue.forEach(function(entity) {
+        if (entity.type === "Player") {
+            card = players[entity.name].card;
+            players[entity.name].scoreItem.text = entity.score;
+            players[entity.name].cross.visible = !entity.active;
+            card.x = x;
+            x += PLAYER_CARD_WIDTH + 20;
+        } else if (entity.type === "Bomb") {
+            card = bombs[entity.id].card;
+            bombs[entity.id].timerItem.text = entity.timer;
+            card.x = x;
+            x += BOMB_CARD_WIDTH + 20;
+        }
+
+        card.y = GAME_WORLD.offsetY + GAME_WORLD.height + 25;
+        card.visible = true;
     });
 }
 
@@ -203,7 +293,9 @@ window.onload = function() {
     socket.on("moveplayer", onMovePlayer);
     socket.on("playerdeath", onPlayerDeath);
     socket.on("playerrespawn", onPlayerRespawn);
+    socket.on("playerdisconnect", onPlayerDisconnect);
     socket.on("addbomb", onAddbomb);
     socket.on("updatebomb", onUpdateBomb);
     socket.on("bombexplosion", onBombExplosion);
+    socket.on("entityqueue", onEntityQueue);
 };

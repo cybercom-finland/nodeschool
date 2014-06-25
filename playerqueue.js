@@ -23,6 +23,10 @@ exports.getConnectedPlayer = function() {
     return null;
 }
 
+exports.getQueue = function() {
+    return queue;
+}
+
 exports.toString = function() {
     var str = "";
 

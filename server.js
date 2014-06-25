@@ -73,7 +73,7 @@ function onConnection(socket) {
         if (!activePlayers) {
             // Give the turn to a newly added player because it is the only active one in the queue
             activePlayers = true;
-            nextTurn(0);
+            nextTurn(DELAY);
         } else {
             // Tell the world state with null turn,
             // if not yet the turn of the (re)connected player
@@ -121,8 +121,10 @@ function onConnection(socket) {
                 // Clear the timeout timer and move to the next player
                 clearTimeout(timeoutTimer);
                 timeoutTimer = null;
-                nextTurn(0);
+                nextTurn(DELAY);
             }
+
+            visualizer.playerDisconnect(player.name);
 
             player = null;
         }
@@ -139,11 +141,14 @@ function onTimeout() {
     currentEntity.socket.emit("timeout");
 
     // Move to the next player
-    nextTurn(0);
+    nextTurn(DELAY);
 }
 
 // Starts the next turn after a small delay
 function nextTurn(delay) {
+    // Send the queue to the visualizers
+    visualizer.entityQueue(entityQueue.getQueue());
+
     currentEntity = null;
     setTimeout(startNextTurn, delay);
 }
@@ -257,7 +262,7 @@ function handleBombTurn(bomb) {
         visualizer.updateBomb(bomb.id, bomb.coordinates, bomb.timer);
 
         // Move to the next entity
-        nextTurn();
+        nextTurn(DELAY);
     }
 }
 

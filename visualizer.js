@@ -1,3 +1,6 @@
+var Player = require("./player.js");
+var Bomb = require("./bomb.js");
+
 var watchers = [];
 
 exports.addWatcher = function(socket, world) {
@@ -80,5 +83,39 @@ exports.playerDeath = function(name) {
 exports.playerRespawn = function(name, coords) {
     watchers.forEach(function(socket) {
         socket.emit("playerrespawn", name, coords);
+    });
+}
+
+// Sends information about a disconnected player to visualizers
+exports.playerDisconnect = function(name) {
+    watchers.forEach(function(socket) {
+        socket.emit("playerdisconnect", name);
+    });
+}
+
+// Send the entity queue to visualizers
+exports.entityQueue = function(queue) {
+    var data = [];
+    queue.forEach(function(entity) {
+        if (entity.connected) {
+            if (entity instanceof Player) {
+                data.push({
+                    type: "Player",
+                    name: entity.name,
+                    score: entity.score,
+                    active: entity.connected && entity.turnsToRespawn === 0
+                });
+            } else if (entity instanceof Bomb) {
+                data.push({
+                    type: "Bomb",
+                    id: entity.id,
+                    timer: entity.timer
+                });
+            }
+        }
+    });
+
+    watchers.forEach(function(socket) {
+        socket.emit("entityqueue", data);
     });
 }
