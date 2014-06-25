@@ -2,9 +2,9 @@
     "name": "Hack-a-Node",
     "version": "0.0.0",
     "dependencies": {
-        "socket.io": "*",
-        "socket.io-client": "*",
-        "express": "*",
-        "cli-color": "*"
+        "socket.io": "0.9.16",
+        "socket.io-client": "0.9.16",
+        "express": "4.2.0",
+        "cli-color": "0.3.2"
     }
 }
