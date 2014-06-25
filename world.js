@@ -187,8 +187,7 @@ World.prototype.getPeacefulStartPoint = function(name) {
         randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
         randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
     }
-    console.log("[" + randomX + "][" + randomY + "]");
-    if (!this.isFree(randomX, randomY)) {
+    if (!this.isFree(randomX, randomY) || !this.isEnoughSpace(randomX, randomY)) {
         return this.getPeacefulStartPoint(name);
     }
     if (!this.isPeaceful(randomX, randomY, name)) {
@@ -209,11 +208,9 @@ World.prototype.getPeacefulStartPoint = function(name) {
 // Gets start point for a new player
 World.prototype.getStartPointForNewPlayer = function(name) {
     var startPoint = this.getPeacefulStartPoint(name);
-    console.log(JSON.stringify(startPoint));
     var randomX = startPoint[0];
     var randomY = startPoint[1];
-    console.log("Random point: [" + randomX + "][" + randomY + "]");
-    console.log("State: " + this.grid[randomX][randomY].value);
+    console.log("Start point: [" + randomX + "][" + randomY + "]");
     if (this.grid[randomX][randomY] && this.grid[randomX][randomY].value === ' ') {
         return {
             x: randomX,
@@ -300,6 +297,41 @@ World.prototype.isFree = function(x, y) {
     }
 
     return free;
+};
+
+// Checks if there is enough space for startup
+World.prototype.isEnoughSpace = function(x, y, direction) {
+    console.log("isEnoughSpace(" + x + ", " + y + ")");
+    var freeAtNorth = this.grid[x][y - 1].type === "OpenSpace" ? true : false;
+    var freeAtEast = this.grid[x + 1][y].type === "OpenSpace" ? true : false;
+    var freeAtSouth = this.grid[x][y + 1].type === "OpenSpace" ? true : false;
+    var freeAtWest = this.grid[x - 1][y].type === "OpenSpace" ? true : false;
+
+    /// Find an 'L' corner. That's enough open space to explode a bomb safely.
+    if ((freeAtNorth && freeAtEast) || (freeAtEast && freeAtSouth) ||
+        (freeAtSouth && freeAtWest) || (freeAtWest && freeAtNorth)) {
+        return true;
+    } else {
+        // If 'L' is not found, search recursively from the nearest open space tiles
+        // Note: Don't traverse back to the direction from where we got here
+        if (freeAtNorth && direction !== "south") {
+            freeAtNorth = this.isEnoughSpace(x, y - 1, "north");
+        }
+        if (freeAtEast && direction !== "west") {
+            freeAtEast = this.isEnoughSpace(x + 1, y, "east");
+        }
+        if (freeAtSouth && direction !== "north") {
+            freeAtSouth = this.isEnoughSpace(x, y + 1, "south");
+        }
+        if (freeAtWest && direction !== "east") {
+            freeAtWest = this.isEnoughSpace(x - 1, y, "west");
+        }
+        if (freeAtNorth || freeAtEast || freeAtSouth || freeAtWest) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 };
 
 // Checks if the tile is "peaceful" (e.g. for startup)
