@@ -238,7 +238,7 @@ World.prototype.getPlayer = function(name) {
 }
 
 World.prototype.addBomb = function(player) {
-    var bomb = new Bomb(5, 2, player, this);
+    var bomb = new Bomb(player, this);
     bomb.coordinates.x = player.coordinates.x;
     bomb.coordinates.y = player.coordinates.y;
     bomb.id = bombCounter;
@@ -398,8 +398,8 @@ World.prototype.explodeBomb = function(bomb) {
     var explodingTiles = bomb.getExplodingCoordinates();
 
     var explodingWalls = [];
-    var explodingPlayers = [];
-    var explodingBombs = [];
+    var explodingPlayerNames = [];
+    var explodingBombIds = [];
 
     explodingTiles.forEach(function(c) {
         if (self.grid[c.x][c.y].type === "SoftBlock") {
@@ -409,12 +409,12 @@ World.prototype.explodeBomb = function(bomb) {
 
         var player = self.getPlayerByCoordinates(c.x, c.y);
         if (player !== null) {
-            explodingPlayers.push(player.name);
+            explodingPlayerNames.push(player.name);
         }
 
-        var bomb = self.getBombByCoordinates(c.x, c.y);
-        if (bomb !== null) {
-            explodingBombs.push(bomb.id);
+        var explodingBomb = self.getBombByCoordinates(c.x, c.y);
+        if (explodingBomb !== null && bomb !== explodingBomb) {
+            explodingBombIds.push(explodingBomb.id);
         }
     });
 
@@ -423,8 +423,8 @@ World.prototype.explodeBomb = function(bomb) {
     return {
         explodingTiles: explodingTiles,
         explodingWalls: explodingWalls,
-        explodingPlayers: explodingPlayers,
-        explodingBombs: explodingBombs
+        explodingPlayerNames: explodingPlayerNames,
+        explodingBombIds: explodingBombIds
     };
 }
 

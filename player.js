@@ -9,9 +9,11 @@ function Player(name, socket, world) {
     this.socket = socket;
     this.connected = true;
     this.bombsDropped = 0;
-    this.maxAllowedBombs = 1;
     this.score = 0;
     this.turnsToRespawn = 0;
+    this.maxAllowedBombs = 2;
+    this.bombTimer = 5;
+    this.bombSize = 2;
 };
 
 Player.prototype.toString = function() {

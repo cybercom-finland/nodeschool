@@ -3,12 +3,12 @@ var Entity = require("./entity.js");
 Bomb.prototype = Object.create(Entity.prototype);
 Bomb.prototype.constructor = Bomb;
 
-function Bomb(timer, size, owner, world) {
+function Bomb(owner, world) {
     Entity.call(this, world);
-    this.timer = timer;
     this.connected = true;
     this.owner = owner;
-    this.size = size;
+    this.timer = owner.bombTimer;
+    this.size = owner.bombSize;
 };
 
 Bomb.prototype.getExplodingCoordinates = function() {

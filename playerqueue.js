@@ -13,6 +13,17 @@ exports.removeFirst = function() {
     queue.shift();
 }
 
+exports.removePlayer = function(player) {
+    var i = 0;
+    while (i < queue.length) {
+        if (queue[i] === player) {
+            queue.splice(i, 1);
+        } else {
+            ++i;
+        }
+    }
+}
+
 exports.getConnectedPlayer = function() {
     for (var i = 0; i < queue.length; ++i) {
         if (queue[0].connected) {

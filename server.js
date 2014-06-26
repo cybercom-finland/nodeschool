@@ -223,34 +223,7 @@ function handleBombTurn(bomb) {
     if (bomb.timer <= 0) {
         console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
 
-        // Remove the bomb from the queue
-        entityQueue.removeFirst();
-        --bomb.owner.bombsDropped;
-
-        var result = world.explodeBomb(bomb);
-
-        result.explodingPlayers.forEach(function(name) {
-            var player = world.players[name];
-
-            if (player === bomb.owner) {
-                bomb.owner.score -= 50;
-            } else {
-                bomb.owner.score += 100;
-            }
-
-            // Player dies
-            player.coordinates.x = -1;
-            player.coordinates.y = -1;
-            player.turnsToRespawn = 5;
-            console.log("Player " + player + " dies!");
-
-            // Send information to the visualizer
-            visualizer.playerDeath(player.name);
-        });
-        bomb.owner.score += result.explodingWalls.length * 10;
-
-        // Send information to the visualizer
-        visualizer.bombExplosion(bomb.id, result);
+        explodeBomb(bomb.id);
 
         // Move to the next entity
         nextTurn(DELAY);
@@ -264,6 +237,49 @@ function handleBombTurn(bomb) {
         // Move to the next entity
         nextTurn(DELAY);
     }
+}
+
+function explodeBomb(bombId) {
+    var bomb = world.bombs[bombId];
+    if (!bomb) {
+        return;
+    }
+
+    // Remove the bomb from the queue
+    entityQueue.removePlayer(bomb);
+    --bomb.owner.bombsDropped;
+
+    // Explode the bomb and get the result
+    var result = world.explodeBomb(bomb);
+
+    // Go through all killed players
+    result.explodingPlayerNames.forEach(function(name) {
+        var player = world.players[name];
+
+        if (player === bomb.owner) {
+            bomb.owner.score -= 50;
+        } else {
+            bomb.owner.score += 100;
+        }
+
+        // Player dies
+        player.coordinates.x = -1;
+        player.coordinates.y = -1;
+        player.turnsToRespawn = 5;
+        console.log("Player " + player + " dies!");
+
+        // Send information to the visualizer
+        visualizer.playerDeath(player.name);
+    });
+    bomb.owner.score += result.explodingWalls.length * 10;
+
+    // Send information to the visualizer
+    visualizer.bombExplosion(bombId, result);
+
+    // Chain the bomb explosions
+    result.explodingBombIds.forEach(function(b) {
+        explodeBomb(b);
+    });
 }
 
 // Handles the response received from the current player
