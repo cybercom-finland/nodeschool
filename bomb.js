@@ -21,10 +21,14 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = -1; i >= -this.size; --i) {
         var x = this.coordinates.x + i;
         if (x >= 0 && x < this.world.width) {
-            if (this.world.grid[x][this.coordinates.y].type === "HardBlock") {
+            var type = this.world.grid[x][this.coordinates.y].type;
+            if (type === "HardBlock") {
                 break;
             }
             coords.push({ x: x, y: this.coordinates.y });
+            if (type === "SoftBlock") {
+                break;
+            }
         }
     }
 
@@ -32,10 +36,14 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = 1; i <= this.size; ++i) {
         var x = this.coordinates.x + i;
         if (x >= 0 && x < this.world.width) {
-            if (this.world.grid[x][this.coordinates.y].type === "HardBlock") {
+            var type = this.world.grid[x][this.coordinates.y].type;
+            if (type === "HardBlock") {
                 break;
             }
             coords.push({ x: x, y: this.coordinates.y });
+            if (type === "SoftBlock") {
+                break;
+            }
         }
     }
 
@@ -43,21 +51,28 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = -1; i >= -this.size; --i) {
         var y = this.coordinates.y + i;
         if (y >= 0 && y < this.world.height) {
-            if (this.world.grid[this.coordinates.x][y].type === "HardBlock") {
+            var type = this.world.grid[this.coordinates.x][y].type;
+            if (type === "HardBlock") {
                 break;
             }
             coords.push({ x: this.coordinates.x, y: y });
-        }
+            if (type === "SoftBlock") {
+                break;
+            }        }
     }
 
     // Down
     for (i = 1; i <= this.size; ++i) {
         var y = this.coordinates.y + i;
         if (y >= 0 && y < this.world.height) {
-            if (this.world.grid[this.coordinates.x][y].type === "HardBlock") {
+            var type = this.world.grid[this.coordinates.x][y].type;
+            if (type === "HardBlock") {
                 break;
             }
             coords.push({ x: this.coordinates.x, y: y });
+            if (type === "SoftBlock") {
+                break;
+            }
         }
     }
 

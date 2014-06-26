@@ -1,5 +1,6 @@
 var players = {};
 var bombs = {};
+var pickups = {};
 
 var width;
 var height;
@@ -201,24 +202,29 @@ function onAddbomb(id, coords, timer) {
         card: card,
         timerItem: timerItem
     };
+
+    // Bring all players to top
+    Object.keys(players).forEach(function(name) {
+        players[name].sprite.bringToTop();
+    });
 }
 
 function onUpdateBomb(id, coords, timer) {
     // Do nothing
 }
 
-function onBombExplosion(id, data) {
+function onBombExplosion(id, explodingTiles, explodingWalls) {
     bombs[id].sprite.destroy();
     bombs[id].card.destroy();
     delete bombs[id];
 
     // Remove destroyed walls
-    data.explodingWalls.forEach(function(c) {
+    explodingWalls.forEach(function(c) {
         tilemap.removeTile(c.x, c.y, "walls");
     });
 
     // Add explosion animations
-    data.explodingTiles.forEach(function(c) {
+    explodingTiles.forEach(function(c) {
         var sprite = addSprite(c.x, c.y, "explosion_1");
         sprite.animations.add("explosion", ["explosion_1", "explosion_2", "explosion_3", "explosion_2", "explosion_1"]);
         sprite.play("explosion", 10, false, true);
@@ -246,6 +252,19 @@ function onEntityQueue(queue) {
         card.y = GAME_WORLD.offsetY + GAME_WORLD.height + 25;
         card.visible = true;
     });
+}
+
+function onAddPickup(id, coords, type) {
+    var sprite = addSprite(coords.x, coords.y, "pickup");
+
+    pickups[id] = {
+        sprite: sprite,
+    };
+}
+
+function onDestroyPickup(id) {
+    pickups[id].sprite.destroy();
+    delete pickups[id];
 }
 
 function preload() {
@@ -298,4 +317,6 @@ window.onload = function() {
     socket.on("updatebomb", onUpdateBomb);
     socket.on("bombexplosion", onBombExplosion);
     socket.on("entityqueue", onEntityQueue);
+    socket.on("addpickup", onAddPickup);
+    socket.on("destroypickup", onDestroyPickup);
 };

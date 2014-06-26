@@ -1,6 +1,7 @@
 var Item = require("./item.js");
 var Player = require("./player.js");
 var Bomb = require("./bomb.js");
+var Pickup = require("./pickup.js");
 
 var clc = require("cli-color");
 
@@ -9,6 +10,7 @@ var HEIGHT = 19;
 var WIDTH = 39;
 
 var bombCounter = 0;
+var pickupCounter = 0;
 
 // Constructor for World object
 //
@@ -48,6 +50,7 @@ function World() {
     this.playerCount = 0;
     this.players = {};
     this.bombs = {};
+    this.pickups = {};
     this.nextStartPoint = 1;
 }
 
@@ -237,6 +240,7 @@ World.prototype.getPlayer = function(name) {
     return this.players[name];
 }
 
+// Creates a new bomb and returns it
 World.prototype.addBomb = function(player) {
     var bomb = new Bomb(player, this);
     bomb.coordinates.x = player.coordinates.x;
@@ -247,6 +251,19 @@ World.prototype.addBomb = function(player) {
     ++bombCounter;
 
     return bomb;
+}
+
+// Creates a new pickup and returns it
+World.prototype.addPickup = function(x, y) {
+    var pickup = new Pickup(this);
+    pickup.coordinates.x = x;
+    pickup.coordinates.y = y;
+    pickup.id = pickupCounter;
+
+    this.pickups[pickupCounter] = pickup;
+    ++pickupCounter;
+
+    return pickup;
 }
 
 // Returns coordinates of all enemy players
@@ -393,6 +410,23 @@ World.prototype.getPlayerByCoordinates = function(x, y) {
     return null;
 }
 
+World.prototype.getPickupByCoordinates = function(x, y) {
+    if (!this.pickups) {
+        return null;
+    }
+
+    var pickupIds = Object.keys(this.pickups);
+
+    for (var i = 0; i < pickupIds.length; ++i) {
+        var pickup = this.pickups[pickupIds[i]];
+        if (pickup.coordinates.x === x && pickup.coordinates.y === y) {
+            return pickup;
+        }
+    }
+
+    return null;
+}
+
 World.prototype.explodeBomb = function(bomb) {
     var self = this;
     var explodingTiles = bomb.getExplodingCoordinates();
@@ -400,6 +434,7 @@ World.prototype.explodeBomb = function(bomb) {
     var explodingWalls = [];
     var explodingPlayerNames = [];
     var explodingBombIds = [];
+    var explodingPickupIds = [];
 
     explodingTiles.forEach(function(c) {
         if (self.grid[c.x][c.y].type === "SoftBlock") {
@@ -416,6 +451,11 @@ World.prototype.explodeBomb = function(bomb) {
         if (explodingBomb !== null && bomb !== explodingBomb) {
             explodingBombIds.push(explodingBomb.id);
         }
+
+        var pickup = self.getPickupByCoordinates(c.x, c.y);
+        if (pickup !== null) {
+            explodingPickupIds.push(pickup.id);
+        }
     });
 
     delete this.bombs[bomb.id];
@@ -424,7 +464,8 @@ World.prototype.explodeBomb = function(bomb) {
         explodingTiles: explodingTiles,
         explodingWalls: explodingWalls,
         explodingPlayerNames: explodingPlayerNames,
-        explodingBombIds: explodingBombIds
+        explodingBombIds: explodingBombIds,
+        explodingPickupIds: explodingPickupIds
     };
 }
 

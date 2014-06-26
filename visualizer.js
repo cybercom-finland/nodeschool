@@ -17,6 +17,10 @@ exports.addWatcher = function(socket, world) {
     Object.keys(world.bombs).forEach(function(id) {
         socket.emit("addbomb", id, world.bombs[id].coordinates, world.bombs[id].timer);
     });
+
+    Object.keys(world.pickups).forEach(function(id) {
+        socket.emit("addpickup", id, world.pickups[id].coordinates, world.pickups[id].type);
+    });
 };
 
 exports.removeWatcher = function(socket) {
@@ -66,9 +70,9 @@ exports.updateBomb = function(id, coords, timer) {
 }
 
 // Sends information about an exploded bomb to visualizers
-exports.bombExplosion = function(id, data) {
+exports.bombExplosion = function(id, explodingTiles, explodingWalls) {
     watchers.forEach(function(socket) {
-        socket.emit("bombexplosion", id, data);
+        socket.emit("bombexplosion", id, explodingTiles, explodingWalls);
     });
 }
 
@@ -119,3 +123,18 @@ exports.entityQueue = function(queue) {
         socket.emit("entityqueue", data);
     });
 }
+
+// Sends information about a new pickup to visualizers
+exports.addPickup = function(id, coords, type) {
+    watchers.forEach(function(socket) {
+        socket.emit("addpickup", id, coords, type);
+    });
+}
+
+// Sends information about a destroyed pickup to visualizers
+exports.destroyPickup = function(id) {
+    watchers.forEach(function(socket) {
+        socket.emit("destroypickup", id);
+    });
+}
+
