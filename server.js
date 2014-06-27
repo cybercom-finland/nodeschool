@@ -1,7 +1,7 @@
 // A server
 
 var TIMEOUT = 5000;
-var DELAY = 500;
+var DELAY = 300;
 var PICKUP_PROBABILITY = 0.2;
 
 var timeoutTimer = null;
@@ -276,6 +276,7 @@ function explodeBomb(bombId, player, pickupCoords) {
         killedPlayer.coordinates.x = -1;
         killedPlayer.coordinates.y = -1;
         killedPlayer.turnsToRespawn = 5;
+        killedPlayer.resetDefaultValues();
         console.log("Player " + killedPlayer + " dies!");
 
         // Send information to the visualizer
@@ -343,6 +344,16 @@ function movePlayer(player, action) {
     if (!ok) {
         console.log("Player " + player + " is unable to move to that direction.");
     } else {
+        // Check if the tile has a pickup
+        var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
+        if (pickup) {
+            console.log("Pickup collected.");
+            visualizer.destroyPickup(pickup.id);
+
+            // TODO: Handle different pickup types
+            player.bombSize += 1;
+        }
+
         // Send information to the visualizer
         visualizer.movePlayer(player.name, player.coordinates);
     }

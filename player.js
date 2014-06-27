@@ -11,6 +11,10 @@ function Player(name, socket, world) {
     this.bombsDropped = 0;
     this.score = 0;
     this.turnsToRespawn = 0;
+    this.resetDefaultValues();
+}
+
+Player.prototype.resetDefaultValues = function() {
     this.maxAllowedBombs = 2;
     this.bombTimer = 5;
     this.bombSize = 2;

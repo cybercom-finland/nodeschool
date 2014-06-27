@@ -190,7 +190,7 @@ World.prototype.getPeacefulStartPoint = function(name) {
         randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
         randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
     }
-    if (!this.isFree(randomX, randomY) || !this.isEnoughSpace(randomX, randomY)) {
+    if (!this.isFree(randomX, randomY) || !this.isEnoughSpace(randomX, randomY) || this.getPickupByCoordinates(randomX, randomY) !== null) {
         return this.getPeacefulStartPoint(name);
     }
     if (!this.isPeaceful(randomX, randomY, name)) {
