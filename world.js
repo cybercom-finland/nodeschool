@@ -1,5 +1,6 @@
 var Item = require("./item.js");
 var Player = require("./player.js");
+var Enemy = require("./enemy.js");
 var Bomb = require("./bomb.js");
 var Pickup = require("./pickup.js");
 
@@ -34,6 +35,14 @@ function World() {
     this.height = HEIGHT;
     console.log("Creating world with " + this.width + "x" + this.height + " tiles");
 
+    this.playerCount = 0;
+    this.players = {};
+    this.bombs = {};
+    this.pickups = {};
+    this.enemyCount = 4;
+    this.enemies = {};
+    this.nextStartPoint = 5;
+
     // Create an empty world surrounded by borders
     this.grid = new Array(this.width);
     for (var x = 0; x < this.width; x++) {
@@ -47,11 +56,35 @@ function World() {
 
     this.addStaticItemsToWorld();
 
-    this.playerCount = 0;
-    this.players = {};
-    this.bombs = {};
-    this.pickups = {};
+    this.addEnemies();
+    console.log(this.enemies);
     this.nextStartPoint = 1;
+
+    //console.log(JSON.stringify(this.grid))
+    console.log("World:");
+    for (var y = 0; y < this.grid[0].length; y++) {
+        var line = "    ";
+        for (var x = 0; x < this.grid.length; x++) {
+            var c = this.grid[x][y].value;
+            if (c === "#") {
+                line += c;
+            } else if (c === "X") {
+                line += clc.blackBright(c);
+            } else {
+                c = " ";
+                var enemyNames = Object.keys(this.enemies);
+                for (var i = 0; i < enemyNames.length; ++i) {
+                    var enemy = this.enemies[enemyNames[i]];
+                    if (enemy.coordinates.x === x && enemy.coordinates.y === y) {
+                        c = clc.yellowBright("E");
+                        break;
+                    }
+                }
+                line += c;
+            }
+        }
+        console.log(line);
+    }
 }
 
 World.prototype.addStaticItemsToWorld = function() {
@@ -69,24 +102,6 @@ World.prototype.addStaticItemsToWorld = function() {
 
     // Add soft blocks to random free tiles
     this.addSoftBlocks();
-
-    //console.log(JSON.stringify(this.grid))
-    console.log("World:");
-    for (var y = 0; y < this.grid[0].length; y++) {
-        var line = "    ";
-        for (var x = 0; x < this.grid.length; x++) {
-            var c = this.grid[x][y].value;
-            if (c === "#") {
-                line += c;
-            } else if (c === "X") {
-                line += clc.blackBright(c);
-            } else {
-                line += " ";
-            }
-        }
-        console.log(line);
-    }
-
 }
 
 // Adds hard blocks to the empty world
@@ -135,6 +150,17 @@ World.prototype.getRandomItem = function() {
         return new Item.SoftBlockItem();
     } else {
         return new Item.OpenSpaceItem();
+    }
+}
+
+World.prototype.addEnemies = function(number) {
+    for (var i = 0; i < this.enemyCount; i++) {
+        var enemyName = "Enemy" + (i + 1);
+        var enemyType = 1;
+        if (i % 2) {
+            enemyType = 2;
+        }
+        this.addEnemy(enemyName, enemyType);
     }
 }
 
@@ -235,6 +261,15 @@ World.prototype.addPlayer = function(name, socket) {
     return player;
 }
 
+// Creates a new player and returns it
+World.prototype.addEnemy = function(name, type) {
+    var enemy = new Enemy(name, type, this);
+    enemy.coordinates = this.getStartPointForNewPlayer(name);
+    this.enemies[name] = enemy;
+
+    return enemy;
+}
+
 // Returns a player
 World.prototype.getPlayer = function(name) {
     return this.players[name];
@@ -266,7 +301,7 @@ World.prototype.addPickup = function(x, y) {
     return pickup;
 }
 
-// Returns coordinates of all enemy players
+// Returns coordinates of all other players and enemies
 World.prototype.getEnemies = function(name) {
     var self = this;
     var enemies = [];
@@ -277,6 +312,11 @@ World.prototype.getEnemies = function(name) {
                 "coordinates": self.players[enemyName].coordinates
             });
         }
+    });
+    Object.keys(this.enemies).forEach(function(enemyName) {
+        enemies.push({
+            "coordinates": self.enemies[enemyName].coordinates
+        });
     });
 
     return enemies;
