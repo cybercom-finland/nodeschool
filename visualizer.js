@@ -1,4 +1,5 @@
 var Player = require("./player.js");
+var Enemy = require("./enemy.js");
 var Bomb = require("./bomb.js");
 
 var watchers = [];
@@ -10,6 +11,9 @@ exports.addWatcher = function(socket, world) {
 
     // Send the current state of the game
     socket.emit("worldstate", world.grid);
+    Object.keys(world.enemies).forEach(function(name) {
+        socket.emit("addenemy", name, world.enemies[name].type, world.enemies[name].coordinates);
+    });
     Object.keys(world.players).forEach(function(name) {
         socket.emit("addplayer", name, world.players[name].coordinates);
     });
@@ -54,6 +58,13 @@ exports.movePlayer = function(name, coords) {
         socket.emit("moveplayer", name, coords);
     });
 };
+
+// Sends information about a new enemy to visualizers
+exports.addEnemy = function(name, type, coords) {
+    watchers.forEach(function(socket) {
+        socket.emit("addenemy", name, type, coords);
+    });
+}
 
 // Sends information about a new bomb to visualizers
 exports.addBomb = function(id, coords, timer) {
@@ -107,6 +118,13 @@ exports.entityQueue = function(queue) {
                     type: "Player",
                     name: entity.name,
                     score: entity.score,
+                    active: entity.connected && entity.turnsToRespawn === 0
+                });
+            } else if (entity instanceof Enemy) {
+                data.push({
+                    type: "Enemy",
+                    name: entity.name,
+                    enemyType: entity.type,
                     active: entity.connected && entity.turnsToRespawn === 0
                 });
             } else if (entity instanceof Bomb) {

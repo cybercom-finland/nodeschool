@@ -1,4 +1,5 @@
 var players = {};
+var enemies = {};
 var bombs = {};
 var pickups = {};
 
@@ -40,13 +41,27 @@ var TEXTURES = {
     Bomb0Left: 15,
     Bomb0Right: 16,
     Bomb0Up: 17,
-    Bomb0Down: 18
+    Bomb0Down: 18,
+    Explosion1: 19,
+    Explosion2: 20,
+    Explosion3: 21,
+    Pickup: 22,
+    Enemy1FaceDown: 23,
+    Enemy1FaceUp: 24,
+    Enemy1FaceRight: 25,
+    Enemy1FaceLeft: 26,
+    Enemy2FaceDown: 27,
+    Enemy2FaceUp: 28,
+    Enemy2FaceRight: 29,
+    Enemy2FaceLeft: 30
 };
 
 // Player colors
 var COLORS = [ 0xF08080, 0x90EE90, 0x87CEFA, 0xF0E68C ];
+var ENEMY_COLORS = [ 0x526573, 0x609744 ];
 
 var PLAYER_CARD_WIDTH = 150;
+var ENEMY_CARD_WIDTH = 100;
 var BOMB_CARD_WIDTH = 50;
 var CARD_HEIGHT = 100;
 
@@ -178,6 +193,55 @@ function onPlayerDisconnect(name) {
     players[name].card.visible = false;
 }
 
+function onAddEnemy(name, type, coords) {
+    var texture = TEXTURES.Enemy1FaceDown;
+    if (type === 2) {
+        texture = TEXTURES.Enemy2FaceDown;
+    }
+    var sprite = addSprite(coords.x, coords.y, texture);
+
+    var card;
+    card = game.add.group();
+    card.visible = false;
+
+    var color;
+    if (type === 1) {
+        color = ENEMY_COLORS[0];
+    } else {
+        color = ENEMY_COLORS[1];
+    }
+
+    var box = game.add.graphics(0, 0);
+    box.beginFill(color);
+    box.lineStyle(3, 0x000000, 1);
+    box.drawRect(0, 0, ENEMY_CARD_WIDTH, CARD_HEIGHT);
+
+    var cross = game.add.graphics(0, 0);
+    cross.beginFill(0x000000, 1);
+    cross.lineStyle(20, 0x000000, 1);
+    cross.moveTo(15, 15);
+    cross.lineTo(ENEMY_CARD_WIDTH - 15, CARD_HEIGHT - 15);
+    cross.moveTo(ENEMY_CARD_WIDTH - 15, 15);
+    cross.lineTo(15, CARD_HEIGHT - 15);
+
+    var nameItem = game.add.text(10, 10, name, { font: "bold 20px Arial", fill: "#000000" });
+
+    card.add(box);
+    card.add(nameItem);
+    card.add(cross);
+
+    enemies[name] = {
+        sprite: sprite,
+        card: card,
+        cross: cross
+    };
+
+    if (sprite.x < 0 || sprite.y < 0) {
+        // The player is not alive
+        sprite.visible = false;
+    }
+}
+
 function onAddbomb(id, coords, timer) {
     var sprite = addSprite(coords.x, coords.y, TEXTURES.Bomb0);
     sprite.animations.add("bomb", [7, 8, 9, 10, 11, 12, 11, 10, 9, 8], 10, true);
@@ -242,6 +306,11 @@ function onEntityQueue(queue) {
             players[entity.name].cross.visible = !entity.active;
             card.x = x;
             x += PLAYER_CARD_WIDTH + 20;
+        } else if (entity.type === "Enemy") {
+            card = enemies[entity.name].card;
+            enemies[entity.name].cross.visible = !entity.active;
+            card.x = x;
+            x += ENEMY_CARD_WIDTH + 20;
         } else if (entity.type === "Bomb") {
             card = bombs[entity.id].card;
             bombs[entity.id].timerItem.text = entity.timer;
@@ -313,6 +382,7 @@ window.onload = function() {
     socket.on("playerdeath", onPlayerDeath);
     socket.on("playerrespawn", onPlayerRespawn);
     socket.on("playerdisconnect", onPlayerDisconnect);
+    socket.on("addenemy", onAddEnemy);
     socket.on("addbomb", onAddbomb);
     socket.on("updatebomb", onUpdateBomb);
     socket.on("bombexplosion", onBombExplosion);

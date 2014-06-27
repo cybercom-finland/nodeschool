@@ -7,6 +7,7 @@ var PICKUP_PROBABILITY = 0.2;
 var timeoutTimer = null;
 
 var Player = require("./player.js");
+var Enemy = require("./enemy.js");
 var Bomb = require("./bomb.js");
 
 var entityQueue = require("./playerqueue.js");
@@ -34,6 +35,16 @@ exports.run = function(port) {
 
     // Create a new world
     world = new World();
+
+    var enemiesKeys = Object.keys(world.enemies);
+    enemiesKeys.forEach(function(enemyKey) {
+        var enemy = world.enemies[enemyKey];
+        // Add the enemy to a queue
+        entityQueue.addPlayer(enemy);
+
+        // Send information to the visualizer
+        visualizer.addEnemy(enemy.name, enemy.type, enemy.coordinates);
+    })
 };
 
 function onConnection(socket) {
@@ -167,6 +178,8 @@ function startNextTurn() {
 
         if (currentEntity instanceof Player) {
             handlePlayerTurn(currentEntity);
+        } else if (currentEntity instanceof Enemy) {
+            handleEnemyTurn(currentEntity);
         } else if (currentEntity instanceof Bomb) {
             handleBombTurn(currentEntity);
         }
@@ -215,6 +228,16 @@ function handlePlayerTurn(player) {
         // Move to the next player
         nextTurn(DELAY);
     }
+}
+
+function handleEnemyTurn(enemy) {
+    // TODO: Handle actual turn. Currently only skips the turn
+
+    // Move this player to the back of the queue
+    entityQueue.moveFirstToBack();
+
+    // Move to the next player
+    nextTurn(DELAY);
 }
 
 function handleBombTurn(bomb) {
