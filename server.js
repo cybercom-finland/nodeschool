@@ -259,37 +259,46 @@ function handleBombTurn(bomb) {
             result.explodingPlayerNames.forEach(function(name) {
                 var killedPlayer = world.players[name];
 
-                if (killedPlayer === bomb.owner) {
-                    bomb.owner.score -= 50;
-                } else {
-                    bomb.owner.score += 100;
+                // Make sure that the player is still alive
+                if (killedPlayer.turnsToRespawn === 0) {
+                    if (killedPlayer === bomb.owner) {
+                        bomb.owner.score -= 50;
+                    } else {
+                        bomb.owner.score += 100;
+                    }
+
+                    // Player dies
+                    killedPlayer.coordinates.x = -1;
+                    killedPlayer.coordinates.y = -1;
+                    killedPlayer.turnsToRespawn = 5;
+                    killedPlayer.resetDefaultValues();
+
+                    visualizer.playerDeath(killedPlayer.name);
+                    console.log("Player " + killedPlayer + " dies!");
                 }
-
-                // Player dies
-                killedPlayer.coordinates.x = -1;
-                killedPlayer.coordinates.y = -1;
-                killedPlayer.turnsToRespawn = 5;
-                killedPlayer.resetDefaultValues();
-
-                visualizer.playerDeath(killedPlayer.name);
-                console.log("Player " + killedPlayer + " dies!");
             });
             bomb.owner.score += result.explodingWalls.length * 10;
 
             // Go through all destroyed pickups
             result.explodingPickupIds.forEach(function(id) {
-                delete world.pickups[id];
-                visualizer.destroyPickup(id);
+                // Try to remove the pickup.
+                // It is possible that some earlier explosion in this bomb chain has already destroyed it
+                if (world.removePickup(id)) {
+                    visualizer.destroyPickup(id);
+                }
             });
 
             // Go through all destroyed walls
             result.explodingWalls.forEach(function(c) {
-                world.clearTile(c.x, c.y);
+                // Make sure that some previously exploded bomb has not already destroyed this wall
+                if (world.grid[c.x][c.y].type === "SoftBlock") {
+                    world.clearTile(c.x, c.y);
 
-                // For each wall there is a small change that a pickup will appear
-                if (Math.random() < PICKUP_PROBABILITY) {
-                    var pickup = world.addPickup(c.x, c.y);
-                    visualizer.addPickup(pickup.id, c, pickup.type);
+                    // There is a small change that a pickup will appear
+                    if (Math.random() < PICKUP_PROBABILITY) {
+                        var pickup = world.addPickup(c.x, c.y);
+                        visualizer.addPickup(pickup.id, c, pickup.type);
+                    }
                 }
             });
 
@@ -370,6 +379,7 @@ function movePlayer(player, action) {
         var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
         if (pickup) {
             console.log("Pickup collected.");
+            world.removePickup(pickup.id);
             visualizer.destroyPickup(pickup.id);
 
             // TODO: Handle different pickup types

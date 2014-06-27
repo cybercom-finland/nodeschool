@@ -305,6 +305,16 @@ World.prototype.addPickup = function(x, y) {
     return pickup;
 }
 
+// Removes a pickup
+World.prototype.removePickup = function(id) {
+    if (this.pickups.hasOwnProperty(id)) {
+        delete this.pickups[id];
+        return true;
+    } else {
+        return false;
+    }
+}
+
 // Returns coordinates of all other players and enemies
 World.prototype.getEnemies = function(name) {
     var self = this;
