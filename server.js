@@ -247,15 +247,54 @@ function handleBombTurn(bomb) {
     if (bomb.timer <= 0) {
         console.log("Bomb dropped by a player " + bomb.owner + " exploded!");
 
-        var pickupCoords = [];
+        // Results from chained bomb explosions are collected to this array
+        var results = [];
 
-        // The owner of this bomb will get all points from the following chained bomb explosions
-        explodeBomb(bomb.id, bomb.owner, pickupCoords);
+        // Explode the bombs
+        explodeBomb(bomb.id, results);
 
-        // Add new pickups
-        pickupCoords.forEach(function(c) {
-            var pickup = world.addPickup(c.x, c.y);
-            visualizer.addPickup(pickup.id, c, pickup.type);
+        // Handle the destruction caused by the bombs
+        results.forEach(function(result) {
+            // Go through all killed players
+            result.explodingPlayerNames.forEach(function(name) {
+                var killedPlayer = world.players[name];
+
+                if (killedPlayer === bomb.owner) {
+                    bomb.owner.score -= 50;
+                } else {
+                    bomb.owner.score += 100;
+                }
+
+                // Player dies
+                killedPlayer.coordinates.x = -1;
+                killedPlayer.coordinates.y = -1;
+                killedPlayer.turnsToRespawn = 5;
+                killedPlayer.resetDefaultValues();
+
+                visualizer.playerDeath(killedPlayer.name);
+                console.log("Player " + killedPlayer + " dies!");
+            });
+            bomb.owner.score += result.explodingWalls.length * 10;
+
+            // Go through all destroyed pickups
+            result.explodingPickupIds.forEach(function(id) {
+                delete world.pickups[id];
+                visualizer.destroyPickup(id);
+            });
+
+            // Go through all destroyed walls
+            result.explodingWalls.forEach(function(c) {
+                world.clearTile(c.x, c.y);
+
+                // For each wall there is a small change that a pickup will appear
+                if (Math.random() < PICKUP_PROBABILITY) {
+                    var pickup = world.addPickup(c.x, c.y);
+                    visualizer.addPickup(pickup.id, c, pickup.type);
+                }
+            });
+
+            // Send information to the visualizer
+            visualizer.bombExplosion(result.bombId, result.explodingTiles, result.explodingWalls);
         });
 
         // Move to the next entity
@@ -272,7 +311,7 @@ function handleBombTurn(bomb) {
     }
 }
 
-function explodeBomb(bombId, player, pickupCoords) {
+function explodeBomb(bombId, results) {
     var bomb = world.bombs[bombId];
     if (!bomb) {
         return;
@@ -284,51 +323,11 @@ function explodeBomb(bombId, player, pickupCoords) {
 
     // Explode the bomb and get the result
     var result = world.explodeBomb(bomb);
+    results.push(result);
 
-    // Go through all killed players
-    result.explodingPlayerNames.forEach(function(name) {
-        var killedPlayer = world.players[name];
-
-        if (killedPlayer === player) {
-            player.score -= 50;
-        } else {
-            player.score += 100;
-        }
-
-        // Player dies
-        killedPlayer.coordinates.x = -1;
-        killedPlayer.coordinates.y = -1;
-        killedPlayer.turnsToRespawn = 5;
-        killedPlayer.resetDefaultValues();
-        console.log("Player " + killedPlayer + " dies!");
-
-        // Send information to the visualizer
-        visualizer.playerDeath(killedPlayer.name);
-    });
-    player.score += result.explodingWalls.length * 10;
-
-    // Go through all destroyed pickups
-    result.explodingPickupIds.forEach(function(id) {
-        delete world.pickups[id];
-        visualizer.destroyPickup(id);
-    });
-
-    // Go through all destroyed walls
-    result.explodingWalls.forEach(function(c) {
-        // For each wall there is a small change that a pickup will appear.
-        // The coordinates of new pickups are collected to an array and they
-        // are added after all chained bombs have exploded.
-        if (Math.random() < PICKUP_PROBABILITY) {
-            pickupCoords.push(c);
-        }
-    });
-
-    // Send information to the visualizer
-    visualizer.bombExplosion(bombId, result.explodingTiles, result.explodingWalls);
-
-    // Chain the bomb explosions
-    result.explodingBombIds.forEach(function(b) {
-        explodeBomb(b, player, pickupCoords);
+    // Chain the bomb explosions recursively
+    result.explodingBombIds.forEach(function(id) {
+        explodeBomb(id, results);
     });
 }
 

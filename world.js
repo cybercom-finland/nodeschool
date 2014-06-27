@@ -153,6 +153,10 @@ World.prototype.getRandomItem = function() {
     }
 }
 
+World.prototype.clearTile = function(x, y) {
+    this.grid[x][y] = new Item.OpenSpaceItem();
+}
+
 World.prototype.addEnemies = function(number) {
     for (var i = 0; i < this.enemyCount; i++) {
         var enemyName = "Enemy" + (i + 1);
@@ -478,7 +482,6 @@ World.prototype.explodeBomb = function(bomb) {
 
     explodingTiles.forEach(function(c) {
         if (self.grid[c.x][c.y].type === "SoftBlock") {
-            self.grid[c.x][c.y] = new Item.OpenSpaceItem();
             explodingWalls.push(c);
         }
 
@@ -501,6 +504,7 @@ World.prototype.explodeBomb = function(bomb) {
     delete this.bombs[bomb.id];
 
     return {
+        bombId: bomb.id,
         explodingTiles: explodingTiles,
         explodingWalls: explodingWalls,
         explodingPlayerNames: explodingPlayerNames,
