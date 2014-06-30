@@ -1,22 +1,22 @@
 var queue = [];
 
-exports.addPlayer = function(player) {
-    queue.push(player);
+exports.addEntity = function(entity) {
+    queue.push(entity);
 }
 
 exports.moveFirstToBack = function() {
-    var player = queue.shift();
-    queue.push(player);
+    var entity = queue.shift();
+    queue.push(entity);
 }
 
 exports.removeFirst = function() {
     queue.shift();
 }
 
-exports.removePlayer = function(player) {
+exports.removeEntity = function(entity) {
     var i = 0;
     while (i < queue.length) {
-        if (queue[i] === player) {
+        if (queue[i] === entity) {
             queue.splice(i, 1);
         } else {
             ++i;
@@ -24,7 +24,7 @@ exports.removePlayer = function(player) {
     }
 }
 
-exports.getConnectedPlayer = function() {
+exports.getConnectedEntity = function() {
     for (var i = 0; i < queue.length; ++i) {
         if (queue[0].connected) {
             return queue[0];
@@ -38,15 +38,25 @@ exports.getQueue = function() {
     return queue;
 }
 
+exports.shuffle = function() {
+    // Fisher-Yates shuffle
+    for (var i = queue.length - 1; i > 0 ; --i) {
+        var  j = Math.floor(Math.random() * i);
+        var temp = queue[i];
+        queue[i] = queue[j];
+        queue[j] = temp;
+    }
+}
+
 exports.toString = function() {
     var str = "";
 
-    queue.forEach(function(player) {
+    queue.forEach(function(entity) {
         if (str) {
             str += ", ";
         }
-        str += player;
-        if (!player.connected) {
+        str += entity;
+        if (!entity.connected) {
             str += "*";
         }
     });

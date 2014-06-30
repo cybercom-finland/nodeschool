@@ -10,7 +10,7 @@ var Player = require("./player.js");
 var Enemy = require("./enemy.js");
 var Bomb = require("./bomb.js");
 
-var entityQueue = require("./playerqueue.js");
+var entityQueue = require("./entityqueue.js");
 var currentEntity = null;
 var currentTurn = 0;
 var activePlayers = false;
@@ -40,7 +40,7 @@ exports.run = function(port) {
     enemiesKeys.forEach(function(enemyKey) {
         var enemy = world.enemies[enemyKey];
         // Add the enemy to a queue
-        entityQueue.addPlayer(enemy);
+        entityQueue.addEntity(enemy);
 
         // Send information to the visualizer
         visualizer.addEnemy(enemy.name, enemy.type, enemy.coordinates);
@@ -66,7 +66,7 @@ function onConnection(socket) {
             console.log("New player: " + player.name);
 
             // Add the player to a queue
-            entityQueue.addPlayer(player);
+            entityQueue.addEntity(player);
 
             // Send information to the visualizer
             visualizer.addPlayer(player.name, player.coordinates);
@@ -167,8 +167,8 @@ function nextTurn(delay) {
 
 // Moves the turn to the next connected player
 function startNextTurn() {
-    // Get the next connected player from the queue
-    currentEntity = entityQueue.getConnectedPlayer();
+    // Get the next connected entity from the queue
+    currentEntity = entityQueue.getConnectedEntity();
 
     if (currentEntity) {
         ++currentTurn;
@@ -357,7 +357,7 @@ function explodeBomb(bombId, results) {
     }
 
     // Remove the bomb from the queue
-    entityQueue.removePlayer(bomb);
+    entityQueue.removeEntity(bomb);
     --bomb.owner.bombsDropped;
 
     // Explode the bomb and get the result
@@ -392,7 +392,7 @@ function addBomb(player) {
         ++player.bombsDropped;
 
         // Add the bomb to a queue
-        entityQueue.addPlayer(bomb);
+        entityQueue.addEntity(bomb);
 
         // Send information to the visualizer
         visualizer.addBomb(bomb.id, bomb.coordinates, bomb.timer);
@@ -417,6 +417,10 @@ function movePlayer(player, action) {
                 // Increases the explosion size
                 console.log("Pickup collected: Power");
                 player.bombSize += 1;
+            } else if (pickup.type === "Shuffle") {
+                // Randomizes the entity queue order
+                console.log("Pickup collected: Shuffle");
+                entityQueue.shuffle();
             } else {
                 console.log("Unknown pickup collected.");
             }

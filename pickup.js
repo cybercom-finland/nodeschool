@@ -8,7 +8,11 @@ function Pickup(world) {
     this.connected = true;
 
     // Choose what kind of pickup this is
-    this.type = "Power";
+    if (Math.random() < 0.5) {
+        this.type = "Shuffle";
+    } else {
+        this.type = "Power";
+    }
 };
 
 Pickup.prototype.toString = function() {
