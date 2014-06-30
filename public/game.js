@@ -237,9 +237,20 @@ function onAddEnemy(name, type, coords) {
     };
 
     if (sprite.x < 0 || sprite.y < 0) {
-        // The player is not alive
+        // The enemy is not alive
         sprite.visible = false;
     }
+}
+
+function onEnemyDeath(name) {
+    enemies[name].sprite.visible = false;
+}
+
+function onEnemyRespawn(name, type, coords) {
+    enemies[name].sprite.visible = true;
+    enemies[name].sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
+    enemies[name].sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+    console.log(enemies[name])
 }
 
 function onAddbomb(id, coords, timer) {
@@ -383,6 +394,8 @@ window.onload = function() {
     socket.on("playerrespawn", onPlayerRespawn);
     socket.on("playerdisconnect", onPlayerDisconnect);
     socket.on("addenemy", onAddEnemy);
+    socket.on("enemydeath", onEnemyDeath);
+    socket.on("enemyrespawn", onEnemyRespawn);
     socket.on("addbomb", onAddbomb);
     socket.on("updatebomb", onUpdateBomb);
     socket.on("bombexplosion", onBombExplosion);

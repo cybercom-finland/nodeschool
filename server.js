@@ -231,10 +231,22 @@ function handlePlayerTurn(player) {
 }
 
 function handleEnemyTurn(enemy) {
+
     // TODO: Handle actual turn. Currently only skips the turn
 
     // Move this player to the back of the queue
     entityQueue.moveFirstToBack();
+
+    if (enemy.turnsToRespawn > 0) {
+        --enemy.turnsToRespawn;
+        if (enemy.turnsToRespawn === 0) {
+            enemy.coordinates = world.getStartPointForNewPlayer();
+            console.log("Enemy " + enemy + " respawned.");
+
+            // Send information to the visualizer
+            visualizer.enemyRespawn(enemy.name, enemy.type, enemy.coordinates);
+        }
+    }
 
     // Move to the next player
     nextTurn(DELAY);
@@ -278,6 +290,21 @@ function handleBombTurn(bomb) {
                 }
             });
             bomb.owner.score += result.explodingWalls.length * 10;
+            // TODO: Scoring for killed enemies
+
+            // Go through all killed enemies
+            result.explodingEnemyNames.forEach(function(name) {
+                var killedEnemy = world.enemies[name];
+
+                // Enemy dies
+                killedEnemy.coordinates.x = -1;
+                killedEnemy.coordinates.y = -1;
+                killedEnemy.turnsToRespawn = 5;
+                console.log("Enemy " + killedEnemy + " dies!");
+
+                // Send information to the visualizer
+                visualizer.enemyDeath(killedEnemy.name);
+            });
 
             // Go through all destroyed pickups
             result.explodingPickupIds.forEach(function(id) {

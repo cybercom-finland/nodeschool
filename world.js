@@ -464,6 +464,23 @@ World.prototype.getPlayerByCoordinates = function(x, y) {
     return null;
 }
 
+World.prototype.getEnemyByCoordinates = function(x, y) {
+    if (!this.enemies) {
+        return null;
+    }
+
+    var enemyIds = Object.keys(this.enemies);
+
+    for (var i = 0; i < enemyIds.length; ++i) {
+        var enemy = this.enemies[enemyIds[i]];
+        if (enemy.coordinates.x === x && enemy.coordinates.y === y) {
+            return enemy;
+        }
+    }
+
+    return null;
+}
+
 World.prototype.getPickupByCoordinates = function(x, y) {
     if (!this.pickups) {
         return null;
@@ -487,6 +504,7 @@ World.prototype.explodeBomb = function(bomb) {
 
     var explodingWalls = [];
     var explodingPlayerNames = [];
+    var explodingEnemyNames = [];
     var explodingBombIds = [];
     var explodingPickupIds = [];
 
@@ -498,6 +516,11 @@ World.prototype.explodeBomb = function(bomb) {
         var player = self.getPlayerByCoordinates(c.x, c.y);
         if (player !== null) {
             explodingPlayerNames.push(player.name);
+        }
+
+        var enemy = self.getEnemyByCoordinates(c.x, c.y);
+        if (enemy !== null) {
+            explodingEnemyNames.push(enemy.name);
         }
 
         var explodingBomb = self.getBombByCoordinates(c.x, c.y);
@@ -518,6 +541,7 @@ World.prototype.explodeBomb = function(bomb) {
         explodingTiles: explodingTiles,
         explodingWalls: explodingWalls,
         explodingPlayerNames: explodingPlayerNames,
+        explodingEnemyNames: explodingEnemyNames,
         explodingBombIds: explodingBombIds,
         explodingPickupIds: explodingPickupIds
     };

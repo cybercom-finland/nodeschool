@@ -108,6 +108,20 @@ exports.playerDisconnect = function(name) {
     });
 }
 
+// Sends information about player death to visualizers
+exports.enemyDeath = function(name, type) {
+    watchers.forEach(function(socket) {
+        socket.emit("enemydeath", name, type);
+    });
+}
+
+// Sends information about player rebirth to visualizers
+exports.enemyRespawn = function(name, type, coords) {
+    watchers.forEach(function(socket) {
+        socket.emit("enemyrespawn", name, type, coords);
+    });
+}
+
 // Send the entity queue to visualizers
 exports.entityQueue = function(queue) {
     var data = [];
