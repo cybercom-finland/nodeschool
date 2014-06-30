@@ -7,8 +7,8 @@ function Pickup(world) {
     Entity.call(this, world);
     this.connected = true;
 
-    // TODO: Choose what kind of pickup this is
-    this.type = "TYPE_" + Math.round(Math.random() * 9);
+    // Choose what kind of pickup this is
+    this.type = "Power";
 };
 
 Pickup.prototype.toString = function() {

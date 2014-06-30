@@ -408,12 +408,18 @@ function movePlayer(player, action) {
         // Check if the tile has a pickup
         var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
         if (pickup) {
-            console.log("Pickup collected.");
+            // Remove the pickup
             world.removePickup(pickup.id);
             visualizer.destroyPickup(pickup.id);
 
-            // TODO: Handle different pickup types
-            player.bombSize += 1;
+            // Handle different pickup types
+            if (pickup.type === "Power") {
+                // Increases the explosion size
+                console.log("Pickup collected: Power");
+                player.bombSize += 1;
+            } else {
+                console.log("Unknown pickup collected.");
+            }
         }
 
         // Send information to the visualizer
