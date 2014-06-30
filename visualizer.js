@@ -66,6 +66,13 @@ exports.addEnemy = function(name, type, coords) {
     });
 }
 
+// Sends information about a player movement to visualizers
+exports.moveEnemy = function(name, type, coords) {
+    watchers.forEach(function(socket) {
+        socket.emit("moveenemy", name, type, coords);
+    });
+};
+
 // Sends information about a new bomb to visualizers
 exports.addBomb = function(id, coords, timer) {
     watchers.forEach(function(socket) {

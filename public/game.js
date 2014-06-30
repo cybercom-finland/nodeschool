@@ -242,6 +242,48 @@ function onAddEnemy(name, type, coords) {
     }
 }
 
+function onMoveEnemy(name, type, coords) {
+    var sprite = enemies[name].sprite;
+
+    var oldX = sprite.x;
+    var oldY = sprite.y;
+    sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
+    sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+
+    var flip = false;
+
+    if (oldX < sprite.x) {
+        sprite.frame = TEXTURES.Enemy1FaceRight;
+        if (type === 2) {
+            sprite.frame = TEXTURES.Enemy2FaceRight;
+        }
+    } else if (oldX > sprite.x) {
+        sprite.frame = TEXTURES.Enemy1FaceLeft;
+        if (type === 2) {
+            sprite.frame = TEXTURES.Enemy2FaceLeft;
+        }
+        flip = true;
+    } else if (oldY < sprite.y) {
+        sprite.frame = TEXTURES.Enemy1FaceDown;
+        if (type === 2) {
+            sprite.frame = TEXTURES.Enemy2FaceDown;
+        }
+    } else {
+        sprite.frame = TEXTURES.Enemy1FaceUp;
+        if (type === 2) {
+            sprite.frame = TEXTURES.Enemy2FaceUp;
+        }
+    }
+
+    if (flip) {
+        sprite.anchor.setTo(1, 0);
+        sprite.scale.x = -SCALE;
+    } else {
+        sprite.anchor.setTo(0, 0);
+        sprite.scale.x = SCALE;
+    }
+}
+
 function onEnemyDeath(name) {
     enemies[name].sprite.visible = false;
 }
@@ -394,6 +436,7 @@ window.onload = function() {
     socket.on("playerrespawn", onPlayerRespawn);
     socket.on("playerdisconnect", onPlayerDisconnect);
     socket.on("addenemy", onAddEnemy);
+    socket.on("moveenemy", onMoveEnemy);
     socket.on("enemydeath", onEnemyDeath);
     socket.on("enemyrespawn", onEnemyRespawn);
     socket.on("addbomb", onAddbomb);

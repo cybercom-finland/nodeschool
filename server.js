@@ -246,6 +246,9 @@ function handleEnemyTurn(enemy) {
             // Send information to the visualizer
             visualizer.enemyRespawn(enemy.name, enemy.type, enemy.coordinates);
         }
+    } else {
+        enemy.handleTurn();
+        visualizer.moveEnemy(enemy.name, enemy.type, enemy.coordinates)
     }
 
     // Move to the next player
