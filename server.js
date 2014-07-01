@@ -86,25 +86,13 @@ function onConnection(socket) {
             // Give the turn to a newly added player because it is the only active one in the queue
             activePlayers = true;
             nextTurn(DELAY);
-        } else {
-            // Tell the world state with null turn,
-            // if not yet the turn of the (re)connected player
-            var state = {
-                "turn": null,
-                "score": player.score,
-                "coordinates": player.coordinates,
-                "enemies": world.getEnemies(player.name),
-                "bombs": world.getBombs(),
-                "world": world.grid
-            }
-            player.socket.emit("state", state);
         }
     });
 
     // Client sends a response
     socket.on("response", function(response) {
-        // Check that the response is sent by a correct player and at a correct turn
-        if (player === currentEntity && response.turn === currentTurn) {
+        // Check that the response is sent by a correct player
+        if (player === currentEntity) {
             // Stop the timeout timer
             clearTimeout(timeoutTimer);
             timeoutTimer = null;
@@ -196,11 +184,17 @@ function handlePlayerTurn(player) {
         // State contains the current turn and current world
         var state = {
             "turn": currentTurn,
+            "name": player.name,
             "score": player.score,
             "coordinates": player.coordinates,
-            "enemies": world.getEnemies(player.name),
+            "bombsAvailable": player.maxAllowedBombs - player.bombsDropped,
+            "bombSize": player.bombSize,
+            "bombTimer": player.bombTimer,
+            "players": world.getOtherPlayers(player.name),
+            "enemies": world.getEnemies(),
+            "pickups": world.getPickups(),
             "bombs": world.getBombs(),
-            "world": world.grid
+            "world": world.getWorldGrid()
         };
 
         // Emit the current world state

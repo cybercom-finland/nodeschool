@@ -3,7 +3,6 @@
 var clc = require("cli-color");
 var cp = require("child_process");
 var socket;
-var currentTurn;
 
 exports.run = function(address, port, name) {
     socket = require("socket.io-client").connect(address, { port: port });
@@ -32,33 +31,26 @@ exports.run = function(address, port, name) {
                 console.log("World:");
                 for (var y = 0; y < data.world[0].length; y++) {
                     var line = "    ";
-                    for (var x = 0; x < data.world.length; x++) {
-                        var c = data.world[x][y].value;
-                        if (c === "#") {
-                            line += c;
-                        } else if (c === "X") {
-                            line += clc.blackBright(c);
-                        } else if (data.coordinates.x === x && data.coordinates.y === y) {
-                            line += clc.yellowBright("P");
-                        } else {
-                            c = " ";
-                            for (var i = 0; i < data.enemies.length; ++i) {
-                                if (data.enemies[i].coordinates.x === x && data.enemies[i].coordinates.y === y) {
-                                    c = clc.yellowBright("E");
-                                    break;
-                                }
-                            }
-                            if (c === " ") {
-                                for (var i = 0; i < data.bombs.length; ++i) {
-                                    if (data.bombs[i].coordinates.x === x && data.bombs[i].coordinates.y === y) {
-                                        c = clc.redBright(data.bombs[i].timer);
-                                        break;
-                                    }
-                                }
-                            }
 
-                            line += c;
+                    for (var x = 0; x < data.world.length; x++) {
+                        var c = " ";
+                        if (data.world[x][y].hardBlock) {
+                            c = "#";
+                        } else if (data.world[x][y].softBlock) {
+                            c = clc.blackBright("X");
+                        } else if (data.coordinates.x === x && data.coordinates.y === y) {
+                            c = clc.yellowBright("P");
+                        } else if (data.world[x][y].playerName) {
+                            c = clc.yellow("P");
+                        } else if (data.world[x][y].enemyName) {
+                            c = clc.yellow("E");
+                        } else if (data.world[x][y].bombId) {
+                            c = clc.redBright(data.bombs[data.world[x][y].bombId].timer);
+                        } else if (data.world[x][y].pickupId) {
+                            c = clc.cyanBright("?");
                         }
+
+                        line += c;
                     }
                     console.log(line);
                 }
@@ -67,14 +59,9 @@ exports.run = function(address, port, name) {
                 // Print the received world for debugging purposes
                 console.log("Coordinates: " + JSON.stringify(data.coordinates));
             }
-            if (data && data.turn) {
+            if (data) {
                 console.log("Turn: " + data.turn + ", score: " + data.score);
-                currentTurn = data.turn;
                 handleTurn(data);
-            } else {
-                // If initial world (at connection time) is received and it is someone else's turn,
-                // data.turn === null
-                console.log("Not my turn");
             }
         });
 
@@ -104,7 +91,6 @@ function initializeAIProcess() {
     aiProcess.on("message", function(action) {
         // Send the response to the server
         var response = {
-            turn: currentTurn,
             action: action
         };
 

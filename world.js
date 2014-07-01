@@ -315,41 +315,95 @@ World.prototype.removePickup = function(id) {
     }
 }
 
-// Returns coordinates of all other players and enemies
+// Returns coordinates of all enemies controlled by a computer
 World.prototype.getEnemies = function(name) {
     var self = this;
-    var enemies = [];
+    var enemies = {};
 
-    Object.keys(this.players).forEach(function(enemyName) {
-        if (enemyName !== name) {
-            enemies.push({
-                "coordinates": self.players[enemyName].coordinates
-            });
-        }
-    });
     Object.keys(this.enemies).forEach(function(enemyName) {
-        enemies.push({
+        enemies[enemyName] = {
             "coordinates": self.enemies[enemyName].coordinates
-        });
+        };
     });
 
     return enemies;
 }
 
-// Returns coordinates and a timer of all bombs
+// Returns coordinates of all other players
+World.prototype.getOtherPlayers = function(name) {
+    var self = this;
+    var players = {};
+
+    Object.keys(this.players).forEach(function(playerName) {
+        if (playerName !== name) {
+            players[playerName] = {
+                "coordinates": self.players[playerName].coordinates,
+                "score": self.players[playerName].score
+            };
+        }
+    });
+
+    return players;
+}
+
+// Returns coordinates and other information of all bombs
 World.prototype.getBombs = function() {
     var self = this;
-    var bombs = [];
+    var bombs = {};
 
     Object.keys(this.bombs).forEach(function(bombId) {
-        bombs.push({
+        bombs[bombId] = {
             "coordinates": self.bombs[bombId].coordinates,
-            "timer": self.bombs[bombId].timer
-        });
+            "timer": self.bombs[bombId].timer,
+            "size": self.bombs[bombId].size
+        };
     });
 
     return bombs;
 }
+
+// Returns coordinates and type of all pickups
+World.prototype.getPickups = function() {
+    var self = this;
+    var pickups = {};
+
+    Object.keys(this.pickups).forEach(function(pickupId) {
+        pickups[pickupId] = {
+            "coordinates": self.pickups[pickupId].coordinates,
+            "type": self.pickups[pickupId].type,
+        };
+    });
+
+    return pickups;
+}
+
+// Returns a world grid that will be sent to a client
+World.prototype.getWorldGrid = function() {
+    var world = new Array(this.width);
+    for (var i = 0; i < this.width; ++i) {
+        world[i] = new Array(this.height);
+        for (var j = 0; j < this.height; ++j) {
+            world[i][j] = {
+                hardBlock: this.grid[i][j].type === "HardBlock",
+                softBlock: this.grid[i][j].type === "SoftBlock"
+            };
+
+            var player = this.getPlayerByCoordinates(i, j);
+            var enemy = this.getEnemyByCoordinates(i, j);
+            var pickup = this.getPickupByCoordinates(i, j);
+            var bomb = this.getBombByCoordinates(i, j);
+
+            world[i][j].playerName = player ? player.name : null;
+            world[i][j].enemyName = enemy ? enemy.name : null;
+            world[i][j].pickupId = pickup ? pickup.id : null;
+            world[i][j].bombId = bomb ? bomb.id : null;
+            world[i][j].free = this.isFree(i, j);
+        }
+    }
+
+    return world;
+}
+
 
 // Checks if the coordinates are inside the world
 World.prototype.isInside = function(x, y) {
