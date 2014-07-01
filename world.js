@@ -416,7 +416,8 @@ World.prototype.isFree = function(x, y) {
     var free = true;
 
     if (tileType === "HardBlock" || tileType === "SoftBlock" ||
-        this.getPlayerByCoordinates(x, y) !== null || this.getBombByCoordinates(x, y) !== null) {
+        this.getPlayerByCoordinates(x, y) !== null || this.getEnemyByCoordinates(x, y) !== null ||
+        this.getBombByCoordinates(x, y) !== null) {
         // Tile is not free
         free = false;
     }

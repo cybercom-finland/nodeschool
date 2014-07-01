@@ -32,6 +32,7 @@ Entity.prototype.move = function(direction) {
 
     // Make sure that the new coordinates are inside the world and that the tile is free
     if (!this.world.isInside(newX, newY) || !this.world.isFree(newX, newY)) {
+        console.log("Cannot move to tile [" + newX + "][" + newY + "].");
         return false;
     }
 

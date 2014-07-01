@@ -226,8 +226,6 @@ function handlePlayerTurn(player) {
 
 function handleEnemyTurn(enemy) {
 
-    // TODO: Handle actual turn. Currently only skips the turn
-
     // Move this player to the back of the queue
     entityQueue.moveFirstToBack();
 
@@ -241,8 +239,12 @@ function handleEnemyTurn(enemy) {
             visualizer.enemyRespawn(enemy.name, enemy.type, enemy.coordinates);
         }
     } else {
-        enemy.handleTurn();
-        visualizer.moveEnemy(enemy.name, enemy.type, enemy.coordinates)
+        var success = enemy.handleTurn();
+        if (!success) {
+            console.log("Enemy " + enemy + " is unable to move to that direction.");
+        } else {
+            visualizer.moveEnemy(enemy.name, enemy.type, enemy.coordinates);
+        }
     }
 
     // Move to the next player
