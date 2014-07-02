@@ -18,23 +18,18 @@ Enemy.prototype.toString = function() {
     return this.name;
 }
 
-Enemy.prototype.handleTurn = function() {
-    if (this.type === 1) {
-        return this.handleTurnEnemy1();
-    } else {
-        return this.handleTurnEnemy2();
-    }
-}
-
 // Enemy 1 just moves straight until it collides.
 // After collision, it starts moving to random direction.
-Enemy.prototype.handleTurnEnemy1 = function() {
+Enemy.prototype.moveEnemy1 = function() {
     var x = this.coordinates.x;
     var y = this.coordinates.y;
     var direction = this.getBasicDirection(x, y);
-    if (direction) {
-        this.movingDirection = direction;
+    if (!direction) {
+        console.log("Could not find a place to move.");
+        return false;
     }
+    this.movingDirection = direction;
+    console.log("Move " + this.name + " to " + this.movingDirection);
     return this.move(this.movingDirection);
 }
 
@@ -42,7 +37,7 @@ Enemy.prototype.handleTurnEnemy1 = function() {
 // except for it looks at every step if a player is visible.
 // If one player is visible, it starts following the player.
 // If multiple players are visible, it starts following the closest player.
-Enemy.prototype.handleTurnEnemy2 = function() {
+Enemy.prototype.moveEnemy2 = function() {
     var x = this.coordinates.x;
     var y = this.coordinates.y;
 
@@ -100,7 +95,7 @@ Enemy.prototype.handleTurnEnemy2 = function() {
     }
 
     if (oldDirection !== this.movingDirection) {
-        console.log(oldDirection + " => " + this.movingDirection);
+        console.log("Player seen, change direction:" + oldDirection + " => " + this.movingDirection);
     }
     return this.move(this.movingDirection);
 }
@@ -109,10 +104,10 @@ Enemy.prototype.getBasicDirection = function(x, y) {
     // Continue to the same direction as before, unless:
     // In case of collision, get new random moving direction
     var direction = this.movingDirection;
-    if ((direction === "UP" && !this.world.isFree(x, y - 1)) ||
-        (direction === "RIGHT" && !this.world.isFree(x + 1, y)) ||
-        (direction === "DOWN" && !this.world.isFree(x, y + 1)) ||
-        (direction === "LEFT" && !this.world.isFree(x - 1, y))) {
+    if ((direction === "UP" && this.world.isBlocked(x, y - 1)) ||
+        (direction === "RIGHT" && this.world.isBlocked(x + 1, y)) ||
+        (direction === "DOWN" && this.world.isBlocked(x, y + 1)) ||
+        (direction === "LEFT" && this.world.isBlocked(x - 1, y))) {
         direction = this.randomDirection(x, y);
     }
     return direction;
@@ -143,18 +138,23 @@ Enemy.prototype.searchForPlayer = function(x, y, direction) {
 Enemy.prototype.randomDirection = function(x, y, randomCounter) {
     if (randomCounter === undefined) {
         randomCounter = 0;
-    } else if (randomCounter > 10) {
+    } else if (randomCounter > 20) {
         // Stop eternal recursion, if a free direction is not found
+        console.log("Nowhere to go, let's skip this turn");
         return null;
     }
     var random = Math.floor(Math.random() * 4);
-    if (random === 0 && (x === undefined || y === undefined || this.world.isFree(x, y - 1))) {
+    if (random === 0 && (x === undefined || y === undefined || !this.world.isBlocked(x, y - 1))) {
+        console.log("Random: UP")
         return "UP";
-    } else if (random === 1 && (x === undefined || y === undefined || this.world.isFree(x + 1, y))) {
+    } else if (random === 1 && (x === undefined || y === undefined || !this.world.isBlocked(x + 1, y))) {
+        console.log("Random: RIGHT")
         return "RIGHT";
-    } else if (random === 2 && (x === undefined || y === undefined || this.world.isFree(x, y + 1))) {
+    } else if (random === 2 && (x === undefined || y === undefined || !this.world.isBlocked(x, y + 1))) {
+        console.log("Random: DOWN")
         return "DOWN";
-    } else if (random === 3 && (x === undefined || y === undefined || this.world.isFree(x - 1, y))) {
+    } else if (random === 3 && (x === undefined || y === undefined || !this.world.isBlocked(x - 1, y))) {
+        console.log("Random: LEFT")
         return "LEFT";
     } else {
         return this.randomDirection(x, y, ++randomCounter);
