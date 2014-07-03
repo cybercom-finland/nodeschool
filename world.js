@@ -316,7 +316,7 @@ World.prototype.removePickup = function(id) {
 }
 
 // Returns coordinates of all enemies controlled by a computer
-World.prototype.getEnemies = function(name) {
+World.prototype.getEnemies = function() {
     var self = this;
     var enemies = {};
 
@@ -327,6 +327,20 @@ World.prototype.getEnemies = function(name) {
     });
 
     return enemies;
+}
+
+// Returns coordinates of all other players
+World.prototype.getAllPlayers = function() {
+    var self = this;
+    var players = {};
+
+    Object.keys(this.players).forEach(function(playerName) {
+        players[playerName] = {
+            "coordinates": self.players[playerName].coordinates
+        };
+    });
+
+    return players;
 }
 
 // Returns coordinates of all other players
@@ -438,16 +452,39 @@ World.prototype.isInside = function(x, y) {
 
 // Checks if the tile is free
 World.prototype.isFree = function(x, y) {
-    var tileType = this.grid[x][y].type;
-    var free = true;
+    if (!this.grid[x] || !this.grid[x][y]) {
+        console.log("Invalid call for isFree(" + x + ", " + y + ")");
+        return false;
+    }
+    var tile = this.grid[x][y];
 
-    if (tileType === "HardBlock" || tileType === "SoftBlock" ||
-        this.getPlayerByCoordinates(x, y) !== null || this.getBombByCoordinates(x, y) !== null) {
+    var free = true;
+    if (tile.type === "HardBlock" || tile.type === "SoftBlock" ||
+        this.getPlayerByCoordinates(x, y) !== null || this.getEnemyByCoordinates(x, y) !== null ||
+        this.getBombByCoordinates(x, y) !== null) {
         // Tile is not free
         free = false;
     }
 
     return free;
+};
+
+// Checks if the tile type is block
+World.prototype.isBlocked = function(x, y) {
+    if (!this.grid[x] || !this.grid[x][y]) {
+        console.log("Invalid call for isBlocked(" + x + ", " + y + ")");
+        return true;
+    }
+    var tile = this.grid[x][y];
+
+    var blocked = false;
+    if (tile.type === "HardBlock" || tile.type === "SoftBlock" ||
+        this.getBombByCoordinates(x, y) !== null) {
+        // Tile is blocked
+        blocked = true;
+    }
+
+    return blocked;
 };
 
 // Checks if there is enough space for startup
@@ -487,9 +524,18 @@ World.prototype.isEnoughSpace = function(x, y, direction) {
 
 // Checks if the tile is "peaceful" (e.g. for startup)
 World.prototype.isPeaceful = function(x, y, name) {
-    var enemies = this.getEnemies(name);
+    var otherPlayers = this.getOtherPlayers(name);
+    var enemies = this.getEnemies();
     var bombs = this.getBombs();
 
+    for (var i = 0; i < otherPlayers.length; i++) {
+        var xDiff = Math.abs(x - otherPlayers[i].coordinates.x);
+        var yDiff = Math.abs(y - otherPlayers[i].coordinates.y);
+        if (xDiff < 3 && yDiff < 3) {
+            console.log("Another player is too close");
+            return false;
+        }
+    }
     for (var i = 0; i < enemies.length; i++) {
         var xDiff = Math.abs(x - enemies[i].coordinates.x);
         var yDiff = Math.abs(y - enemies[i].coordinates.y);

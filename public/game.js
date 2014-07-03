@@ -58,7 +58,7 @@ var TEXTURES = {
 
 // Player colors
 var COLORS = [ 0xF08080, 0x90EE90, 0x87CEFA, 0xF0E68C ];
-var ENEMY_COLORS = [ 0x526573, 0x609744 ];
+var ENEMY_COLORS = [ 0x609744, 0x526573 ];
 
 var PLAYER_CARD_WIDTH = 150;
 var ENEMY_CARD_WIDTH = 100;
@@ -268,7 +268,7 @@ function onMoveEnemy(name, type, coords) {
         if (type === 2) {
             sprite.frame = TEXTURES.Enemy2FaceDown;
         }
-    } else {
+    } else if (oldY > sprite.y){
         sprite.frame = TEXTURES.Enemy1FaceUp;
         if (type === 2) {
             sprite.frame = TEXTURES.Enemy2FaceUp;

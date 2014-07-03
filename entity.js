@@ -10,10 +10,29 @@ Entity.prototype.move = function(direction) {
         return false;
     }
 
-    // Remember old coordinates
-    var oldX = this.coordinates.x;
-    var oldY = this.coordinates.y;
+    var newCoordinates = this.getNewCoordinates(direction);
+    if (!newCoordinates) {
+        console.log("New coordinates could not be fetched.");
+        return false;
+    }
+    var newX = newCoordinates.x;
+    var newY = newCoordinates.y;
 
+    // Make sure that the new coordinates are inside the world and that there is no bomb in the tile
+    // Note: player/enemy collisions are handled separately in the functions that call move().
+    if (!this.world.isInside(newX, newY) || this.world.isBlocked(newX, newY)) {
+        console.log("Cannot move to tile [" + newX + "][" + newY + "].");
+        return false;
+    }
+
+    // Move to the new coordinates
+    this.coordinates.x = newX;
+    this.coordinates.y = newY;
+
+    return true;
+};
+
+Entity.prototype.getNewCoordinates = function(direction) {
     // Get new coordinates
     var newX = this.coordinates.x;
     var newY = this.coordinates.y;
@@ -27,19 +46,9 @@ Entity.prototype.move = function(direction) {
         ++newX;
     } else {
         console.log("Unknown direction.");
-        return false;
+        return null;
     }
-
-    // Make sure that the new coordinates are inside the world and that the tile is free
-    if (!this.world.isInside(newX, newY) || !this.world.isFree(newX, newY)) {
-        return false;
-    }
-
-    // Move to the new coordinates
-    this.coordinates.x = newX;
-    this.coordinates.y = newY;
-
-    return true;
-};
+    return { "x": newX, "y": newY };
+}
 
 module.exports = Entity;

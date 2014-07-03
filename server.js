@@ -226,8 +226,6 @@ function handlePlayerTurn(player) {
 
 function handleEnemyTurn(enemy) {
 
-    // TODO: Handle actual turn. Currently only skips the turn
-
     // Move this player to the back of the queue
     entityQueue.moveFirstToBack();
 
@@ -241,8 +239,7 @@ function handleEnemyTurn(enemy) {
             visualizer.enemyRespawn(enemy.name, enemy.type, enemy.coordinates);
         }
     } else {
-        enemy.handleTurn();
-        visualizer.moveEnemy(enemy.name, enemy.type, enemy.coordinates)
+        moveEnemy(enemy);
     }
 
     // Move to the next player
@@ -266,24 +263,12 @@ function handleBombTurn(bomb) {
         results.forEach(function(result) {
             // Go through all killed players
             result.explodingPlayerNames.forEach(function(name) {
-                var killedPlayer = world.players[name];
-
-                // Make sure that the player is still alive
-                if (killedPlayer.turnsToRespawn === 0) {
-                    if (killedPlayer === bomb.owner) {
-                        bomb.owner.score -= 50;
-                    } else {
+                var killedPlayer = killPlayer(name);
+                if (killedPlayer && killedPlayer.turnsToRespawn === 0) {
+                    // Give scores to bomb owner
+                    if (killedPlayer !== bomb.owner) {
                         bomb.owner.score += 100;
                     }
-
-                    // Player dies
-                    killedPlayer.coordinates.x = -1;
-                    killedPlayer.coordinates.y = -1;
-                    killedPlayer.turnsToRespawn = 5;
-                    killedPlayer.resetDefaultValues();
-
-                    visualizer.playerDeath(killedPlayer.name);
-                    console.log("Player " + killedPlayer + " dies!");
                 }
             });
             bomb.owner.score += result.explodingWalls.length * 10;
@@ -291,16 +276,7 @@ function handleBombTurn(bomb) {
 
             // Go through all killed enemies
             result.explodingEnemyNames.forEach(function(name) {
-                var killedEnemy = world.enemies[name];
-
-                // Enemy dies
-                killedEnemy.coordinates.x = -1;
-                killedEnemy.coordinates.y = -1;
-                killedEnemy.turnsToRespawn = 5;
-                console.log("Enemy " + killedEnemy + " dies!");
-
-                // Send information to the visualizer
-                visualizer.enemyDeath(killedEnemy.name);
+                var killedEnemy = killEnemy(name);
             });
 
             // Go through all destroyed pickups
@@ -394,33 +370,129 @@ function addBomb(player) {
 }
 
 function movePlayer(player, action) {
+    var oldCoordinates = {
+        "x": player.coordinates.x,
+        "y": player.coordinates.y
+    };
     // Move the player
     var ok = player.move(action);
     if (!ok) {
         console.log("Player " + player + " is unable to move to that direction.");
     } else {
-        // Check if the tile has a pickup
-        var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
-        if (pickup) {
-            // Remove the pickup
-            world.removePickup(pickup.id);
-            visualizer.destroyPickup(pickup.id);
-
-            // Handle different pickup types
-            if (pickup.type === "Power") {
-                // Increases the explosion size
-                console.log("Pickup collected: Power");
-                player.bombSize += 1;
-            } else if (pickup.type === "Shuffle") {
-                // Randomizes the entity queue order
-                console.log("Pickup collected: Shuffle");
-                entityQueue.shuffle();
+        var enemyInTile = world.getEnemyByCoordinates(player.coordinates.x, player.coordinates.y);
+        if (enemyInTile) {
+            console.log("Player " + player + " hits an enemy.")
+            // Kill a player if found
+            killPlayer(player.name);
+        } else {
+            var playerInTile = world.getPlayerByCoordinates(player.coordinates.x, player.coordinates.y);
+            var bombInTile = world.getBombByCoordinates(player.coordinates.x, player.coordinates.y);
+            if (bombInTile || (playerInTile && playerInTile !== player)) {
+                if (bombInTile) {
+                    console.log("Player " + player + " hits a bomb.");
+                } else if (playerInTile && playerInTile !== player) {
+                    console.log("Player " + player + " hits another player.");
+                }
+                // Don't go to the same tile with bomb
+                player.coordinates = oldCoordinates;
             } else {
-                console.log("Unknown pickup collected.");
+                // Check if the tile has a pickup
+                var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
+                if (pickup) {
+                    // Remove the pickup
+                    world.removePickup(pickup.id);
+                    visualizer.destroyPickup(pickup.id);
+
+                    // Handle different pickup types
+                    if (pickup.type === "Power") {
+                        // Increases the explosion size
+                        console.log("Pickup collected: Power");
+                        player.bombSize += 1;
+                    } else if (pickup.type === "Shuffle") {
+                        // Randomizes the entity queue order
+                        console.log("Pickup collected: Shuffle");
+                        entityQueue.shuffle();
+                    } else {
+                        console.log("Unknown pickup collected.");
+                    }
+                }
+
+                // Send information to the visualizer
+                visualizer.movePlayer(player.name, player.coordinates);
             }
         }
-
-        // Send information to the visualizer
-        visualizer.movePlayer(player.name, player.coordinates);
     }
+}
+
+// Kill the player
+function killPlayer(name) {
+    var killedPlayer = world.players[name];
+
+    // Make sure that the player is still alive
+    if (killedPlayer.turnsToRespawn === 0) {
+        // Player dies
+        killedPlayer.coordinates.x = -1;
+        killedPlayer.coordinates.y = -1;
+        killedPlayer.turnsToRespawn = 5;
+        // Negative points in case of death
+        killedPlayer.score -= 50;
+        killedPlayer.resetDefaultValues();
+
+        visualizer.playerDeath(killedPlayer.name);
+        console.log("Player " + killedPlayer + " dies!");
+        return killedPlayer;
+    }
+
+    return null;
+}
+
+function moveEnemy(enemy) {
+    var oldCoordinates = {
+        "x": enemy.coordinates.x,
+        "y": enemy.coordinates.y
+    };
+    // Move the enemy
+    var ok = false;
+    if (enemy.type === 1) {
+        ok = enemy.moveEnemy1();
+    } else {
+        ok = enemy.moveEnemy2();
+    }
+    if (!ok) {
+        console.log("Enemy " + enemy + " is unable to move to that direction.");
+    } else {
+        var enemyInTile = world.getEnemyByCoordinates(enemy.coordinates.x, enemy.coordinates.y);
+        if (enemyInTile && enemyInTile !== enemy) {
+            // Don't go to the same tile with other enemy
+            enemy.coordinates = oldCoordinates;
+        } else {
+            var playerInTile = world.getPlayerByCoordinates(enemy.coordinates.x, enemy.coordinates.y);
+            if (playerInTile) {
+                // Kill a player if found
+                killPlayer(playerInTile.name);
+            }
+            var bombInTile = world.getBombByCoordinates(enemy.coordinates.x, enemy.coordinates.y);
+            if (bombInTile) {
+                // Don't go to the same tile with bomb
+                enemy.coordinates = oldCoordinates;
+            }
+            visualizer.moveEnemy(enemy.name, enemy.type, enemy.coordinates);
+        }
+    }
+}
+
+// Kills the enemy
+function killEnemy(name) {
+    var killedEnemy = world.enemies[name];
+
+    // Enemy dies
+    killedEnemy.coordinates.x = -1;
+    killedEnemy.coordinates.y = -1;
+    killedEnemy.turnsToRespawn = 5;
+
+    // Send information to the visualizer
+    visualizer.enemyDeath(killedEnemy.name);
+    console.log("Enemy " + killedEnemy + " dies!");
+
+    return killedEnemy;
 }
