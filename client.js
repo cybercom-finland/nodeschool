@@ -48,6 +48,8 @@ exports.run = function(address, port, name) {
                             c = clc.redBright(data.bombs[data.world[x][y].bombId].timer);
                         } else if (data.world[x][y].pickupId) {
                             c = clc.cyanBright("?");
+                        } else if (data.world[x][y].turnsToExplosion > 0) {
+                            c = clc.red(data.world[x][y].turnsToExplosion);
                         }
 
                         line += c;
@@ -89,12 +91,23 @@ function initializeAIProcess() {
 
     // AI sends a response
     aiProcess.on("message", function(action) {
+        // The action must be a string
+        if (typeof action === "string") {
+            action = action.trim().toUpperCase();
+        } else {
+            action = "";
+        }
+
+        if (action) {
+            console.log("Sending a response: " + action);
+        } else {
+            console.log("Sending an empty response.");
+        }
+
         // Send the response to the server
         var response = {
             action: action
         };
-
-        console.log("Sending a response: " + action);
         socket.emit("response", response);
     });
 

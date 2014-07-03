@@ -13,11 +13,11 @@ process.on("message", function(state) {
         ++counter;
         var rand = Math.floor(Math.random() * 5);
 
-        if (rand === 0 && state.world[x][y - 1].free) action = "UP";
-        else if (rand === 1 && state.world[x + 1][y].free) action = "RIGHT";
-        else if (rand === 2 && state.world[x][y + 1].free) action = "DOWN";
-        else if (rand === 3 && state.world[x - 1][y].free) action = "LEFT";
-        else if (rand === 4 && state.bombsAvailable > 0) action = "BOMB";
+        if (rand === 0 && state.world[x][y - 1].free && state.world[x][y - 1].turnsToExplosion != 1) action = "UP";
+        else if (rand === 1 && state.world[x + 1][y].free && state.world[x + 1][y].turnsToExplosion != 1) action = "RIGHT";
+        else if (rand === 2 && state.world[x][y + 1].free && state.world[x][y + 1].turnsToExplosion != 1) action = "DOWN";
+        else if (rand === 3 && state.world[x - 1][y].free && state.world[x - 1][y].turnsToExplosion != 1) action = "LEFT";
+        else if (rand === 4 && state.world[x][y].bombId === null && state.world[x][y].turnsToExplosion != 1 && state.bombsAvailable > 0) action = "BOMB";
     }
 
     process.send(action);

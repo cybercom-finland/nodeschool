@@ -379,25 +379,51 @@ World.prototype.getPickups = function() {
 
 // Returns a world grid that will be sent to a client
 World.prototype.getWorldGrid = function() {
+    var self = this;
+
     var world = new Array(this.width);
     for (var i = 0; i < this.width; ++i) {
         world[i] = new Array(this.height);
         for (var j = 0; j < this.height; ++j) {
+            // Information about hard and soft blocks
             world[i][j] = {
                 hardBlock: this.grid[i][j].type === "HardBlock",
                 softBlock: this.grid[i][j].type === "SoftBlock"
             };
 
+            // Information about players, enemies, pickups and bombs
             var player = this.getPlayerByCoordinates(i, j);
             var enemy = this.getEnemyByCoordinates(i, j);
             var pickup = this.getPickupByCoordinates(i, j);
             var bomb = this.getBombByCoordinates(i, j);
-
             world[i][j].playerName = player ? player.name : null;
             world[i][j].enemyName = enemy ? enemy.name : null;
             world[i][j].pickupId = pickup ? pickup.id : null;
             world[i][j].bombId = bomb ? bomb.id : null;
             world[i][j].free = this.isFree(i, j);
+            world[i][j].turnsToExplosion = -1;
+        }
+    }
+
+    // For convenience, we also store information about explosions that are known to happen soon
+    var bombIds = Object.keys(this.bombs);
+    for (i = 0; i < bombIds.length; ++i) {
+        var bomb = this.bombs[bombIds[i]];
+        explode(bomb, bomb.timer);
+    }
+    function explode(bomb, turnsToExplosion) {
+        var explodingTiles = bomb.getExplodingCoordinates();
+        for (var i = 0; i < explodingTiles.length; ++i) {
+            var c = explodingTiles[i];
+            if (world[c.x][c.y].turnsToExplosion === -1 || turnsToExplosion < world[c.x][c.y].turnsToExplosion) {
+                world[c.x][c.y].turnsToExplosion = turnsToExplosion;
+
+                // Chain the bomb explosions
+                var explodingBomb = self.getBombByCoordinates(c.x, c.y);
+                if (explodingBomb) {
+                    explode(explodingBomb, turnsToExplosion);
+                }
+            }
         }
     }
 
