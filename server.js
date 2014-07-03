@@ -194,7 +194,9 @@ function handlePlayerTurn(player) {
             "enemies": world.getEnemies(),
             "pickups": world.getPickups(),
             "bombs": world.getBombs(),
-            "world": world.getWorldGrid()
+            "world": world.getWorldGrid(),
+            "worldWidth": world.width,
+            "worldHeight": world.height
         };
 
         // Emit the current world state
