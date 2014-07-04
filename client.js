@@ -26,13 +26,15 @@ exports.run = function(address, port, name) {
         socket.on("state", function(data) {
             console.log();
 
-            if (data && data.world) {
+            if (data) {
+                console.log("Turn: " + data.turn + ", score: " + data.score);
+
                 // Print the received world for debugging purposes
                 console.log("World:");
-                for (var y = 0; y < data.world[0].length; y++) {
+                for (var y = 0; y < data.worldHeight; y++) {
                     var line = "    ";
 
-                    for (var x = 0; x < data.world.length; x++) {
+                    for (var x = 0; x < data.worldWidth; x++) {
                         var c = " ";
                         if (data.world[x][y].hardBlock) {
                             c = "#";
@@ -56,15 +58,18 @@ exports.run = function(address, port, name) {
                     }
                     console.log(line);
                 }
+
+                sendData(data);
             }
-            if (data && data.coordinates) {
-                // Print the received world for debugging purposes
-                console.log("Coordinates: " + JSON.stringify(data.coordinates));
-            }
-            if (data) {
-                console.log("Turn: " + data.turn + ", score: " + data.score);
-                handleTurn(data);
-            }
+        });
+
+        // The server send information about player's death
+        socket.on("death", function(data) {
+            console.log();
+            console.log("Turn: " + data.turn + ", score: " + data.score);
+            console.log("Player dies!");
+
+            sendData(data);
         });
 
         // The server sends the timeout signal
@@ -124,9 +129,8 @@ function initializeAIProcess() {
     });
 }
 
-// Handles one turn
-function handleTurn(data) {
-    // Send the world state to the AI process
+// Sends data to the AI process
+function sendData(data) {
     if (aiProcess) {
         aiProcess.send(data);
     } else {

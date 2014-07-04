@@ -415,7 +415,7 @@ World.prototype.getWorldGrid = function() {
             world[i][j].pickupId = pickup ? pickup.id : null;
             world[i][j].bombId = bomb ? bomb.id : null;
             world[i][j].free = this.isFree(i, j);
-            world[i][j].turnsToExplosion = -1;
+            world[i][j].turnsToExplosion = 0;
         }
     }
 
@@ -429,7 +429,7 @@ World.prototype.getWorldGrid = function() {
         var explodingTiles = bomb.getExplodingCoordinates();
         for (var i = 0; i < explodingTiles.length; ++i) {
             var c = explodingTiles[i];
-            if (world[c.x][c.y].turnsToExplosion === -1 || turnsToExplosion < world[c.x][c.y].turnsToExplosion) {
+            if (!world[c.x][c.y].turnsToExplosion || turnsToExplosion < world[c.x][c.y].turnsToExplosion) {
                 world[c.x][c.y].turnsToExplosion = turnsToExplosion;
 
                 // Chain the bomb explosions

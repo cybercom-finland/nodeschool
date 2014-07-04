@@ -1,10 +1,25 @@
-var state;
-var targetLocation;
+// Receives a message from the server
+process.on("message", function(data) {
+    if ("world" in data) {
+        // This message contains world state information
+        var action = handleTurn(data);
+        process.send(action);
+    } else {
+        // This message informs about player's death
+        handleDeath(data);
+    }
+});
 
-// Receives a world state from the server
-process.on("message", function(newState) {
+
+// The actual AI is implemented below
+
+var state; // Current world state
+var targetLocation; // Coordinates of the target tile that the player is trying to reach
+
+// Handles the current turn. Returns an action that the player does in this turn
+function handleTurn(data) {
     var action = "";
-    state = newState;
+    state = data;
 
     console.log("Thinking...");
 
@@ -29,13 +44,13 @@ process.on("message", function(newState) {
 
     // Try to get away if the current tile is going to explode
     if (state.world[x][y].turnsToExplosion === 1) {
-        if (state.world[x + sx][y].free && state.world[x + sx][y].turnsToExplosion != 1) {
+        if (isSafe(x + sx, y)) {
             action = getDirection(sx, 0);
-        } else if (state.world[x][y + sy].free && state.world[x][y + sy].turnsToExplosion != 1) {
+        } else if (isSafe(x, y + sy)) {
             action = getDirection(0, sy);
-        } else if (state.world[x - sx][y].free && state.world[x - sx][y].turnsToExplosion != 1) {
+        } else if (isSafe(x - sx, y)) {
             action = getDirection(-sx, 0);
-        } else if (state.world[x][y - sy].free && state.world[x][y - sy].turnsToExplosion != 1) {
+        } else if (isSafe(x, y - sy)) {
             action = getDirection(0, -sy);
         } else {
             // The player is going to die. Try to leave a bomb
@@ -43,21 +58,21 @@ process.on("message", function(newState) {
         }
     } else {
         // Current tile is safe. Try to move towards the target tile
-        if (state.world[x + sx][y].free && state.world[x + sx][y].turnsToExplosion != 1) {
+        if (isSafe(x + sx, y)) {
             action = getDirection(sx, 0);
-        } else if (state.world[x][y + sy].free && state.world[x][y + sy].turnsToExplosion != 1) {
+        } else if (isSafe(x, y + sy)) {
             action = getDirection(0, sy);
         } else {
             // The straight path is blocked
-            if (state.bombsAvailable > 0 && state.world[x][y].turnsToExplosion < 0) {
+            if (state.bombsAvailable > 0 && !state.world[x][y].turnsToExplosion) {
                 // Leave a bomb and select a new target
                 action = "BOMB";
                 targetLocation = getTargetLocation();
             } else {
                 // Try to move away and select a new target
-                if (state.world[x - sx][y].free && state.world[x - sx][y].turnsToExplosion != 1) {
+                if (isSafe(x - sx, y)) {
                     action = getDirection(-sx, 0);
-                } else if (state.world[x][y - sy].free && state.world[x][y - sy].turnsToExplosion != 1) {
+                } else if (isSafe(x, y - sy)) {
                     action = getDirection(0, -sy);
                 }
                 targetLocation = getTargetLocation();
@@ -65,9 +80,21 @@ process.on("message", function(newState) {
         }
     }
 
-    process.send(action);
-});
+    return action;
+}
 
+// Handles death
+function handleDeath(data) {
+    // Nothing here...
+}
+
+
+// Helper functions are below
+
+// Checks whether a tile is free and not exploding in the next turn
+function isSafe(x, y) {
+    return state.world[x][y].free && state.world[x][y].turnsToExplosion != 1;
+}
 
 // Returns a direction as a string
 function getDirection(dx, dy) {

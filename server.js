@@ -92,7 +92,7 @@ function onConnection(socket) {
     // Client sends a response
     socket.on("response", function(response) {
         // Check that the response is sent by a correct player
-        if (player === currentEntity) {
+        if (player === currentEntity && player.turnsToRespawn === 0) {
             // Stop the timeout timer
             clearTimeout(timeoutTimer);
             timeoutTimer = null;
@@ -439,6 +439,12 @@ function killPlayer(name) {
         // Negative points in case of death
         killedPlayer.score -= 50;
         killedPlayer.resetDefaultValues();
+
+        // Emit information to the client
+        killedPlayer.socket.emit("death", {
+            "turn": currentTurn,
+            "score": killedPlayer.score
+        });
 
         visualizer.playerDeath(killedPlayer.name);
         console.log("Player " + killedPlayer + " dies!");
