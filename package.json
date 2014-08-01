@@ -5,6 +5,7 @@
         "socket.io": "0.9.16",
         "socket.io-client": "0.9.16",
         "express": "4.2.0",
-        "cli-color": "0.3.2"
+        "cli-color": "0.3.2",
+        "heap": "0.2.3"
     }
 }

@@ -1,3 +1,5 @@
+var Heap = require("heap");
+
 // Receives a message from the server
 process.on("message", function(data) {
     if ("world" in data) {
@@ -142,4 +144,85 @@ function getTargetLocation() {
     }
 
     return location;
+}
+
+// Returns a shortest path between two tiles
+function shortestPath(start, end) {
+    if (start.x === end.x && start.y === end.y) {
+        return [];
+    }
+
+    // Initialize tiles
+    for (var i = 0; i < state.worldWidth; ++i) {
+        for (var j = 0; j < state.worldHeight; ++j) {
+            var tile = state.world[i][j];
+            tile.astar = {};
+            tile.astar.x = i;
+            tile.astar.y = j;
+            tile.astar.f = 0;
+            tile.astar.g = 0;
+            tile.astar.previous = null;
+            tile.astar.closed = false;
+        }
+    }
+
+    var startTile = state.world[start.x][start.y].astar;
+    var endTile = state.world[end.x][end.y].astar;
+
+    // Create a heap and add the start tile
+    var heap = new Heap(function(a, b) {
+        return a.f - b.f;
+    });
+    heap.push(startTile);
+
+    // The main loop of the algorithm
+    while (!heap.empty()) {
+        var tile = heap.pop();
+
+        if (tile === endTile) {
+            // Target tile has been reached. Retrieve and return the path to it
+            var path = [];
+            while (tile.previous) {
+                path.push({ x: tile.x, y: tile.y });
+                tile = tile.previous;
+            }
+            return path.reverse();
+        }
+
+        // Mark this tile as closed
+        tile.closed = true;
+
+        // Get the four neighbor tiles
+        var neighbors = [state.world[tile.x - 1][tile.y].astar,
+                         state.world[tile.x + 1][tile.y].astar,
+                         state.world[tile.x][tile.y - 1].astar,
+                         state.world[tile.x][tile.y + 1].astar];
+
+        for (var i = 0; i < 4; ++i) {
+            var neighbor = neighbors[i];
+
+            // Skip neighbors that are closed ot that are not free
+            if (neighbor.closed || !state.world[neighbor.x][neighbor.y].free) {
+                continue;
+            }
+
+            // Check if the neighbor has been evaluated before
+            var evaluated = neighbor.previous != null;
+
+            // Check the distance and Update the neighbor if necessary
+            if (!evaluated || tile.g + 1 < neighbor.g) {
+                neighbor.previous = tile;
+                neighbor.g = tile.g + 1;
+                neighbor.f = neighbor.g + Math.abs(neighbor.x - end.x) + Math.abs(neighbor.y - end.y);
+
+                if (!evaluated) {
+                    heap.push(neighbor);
+                } else {
+                    heap.updateItem(neighbor);
+                }
+            }
+        }
+    }
+
+    return [];
 }
