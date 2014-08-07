@@ -266,19 +266,28 @@ function handleBombTurn(bomb) {
             // Go through all killed players
             result.explodingPlayerNames.forEach(function(name) {
                 var killedPlayer = killPlayer(name);
-                if (killedPlayer && killedPlayer.turnsToRespawn === 0) {
+                if (killedPlayer) {
                     // Give scores to bomb owner
                     if (killedPlayer !== bomb.owner) {
                         bomb.owner.score += 100;
+                    } else {
+                        // Negative points if the player explodes itself
+                        bomb.owner.score -= 100;
                     }
+
                 }
             });
-            bomb.owner.score += result.explodingWalls.length * 10;
+
+            // Player gets points also from the destroyed walls
+            bomb.owner.score += result.explodingWalls.length * 5;
+
             // TODO: Scoring for killed enemies
 
             // Go through all killed enemies
             result.explodingEnemyNames.forEach(function(name) {
                 var killedEnemy = killEnemy(name);
+                // Give points
+                bomb.owner.score += 50;
             });
 
             // Go through all destroyed pickups
@@ -436,8 +445,6 @@ function killPlayer(name) {
         killedPlayer.coordinates.x = -1;
         killedPlayer.coordinates.y = -1;
         killedPlayer.turnsToRespawn = 5;
-        // Negative points in case of death
-        killedPlayer.score -= 50;
         killedPlayer.resetDefaultValues();
 
         // Emit information to the client
