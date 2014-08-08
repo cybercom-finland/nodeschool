@@ -134,12 +134,16 @@ World.prototype.addSoftBlocks = function() {
                 (y < (this.height * 0.2) || y > (this.height * 0.8) || (y > (this.height * 0.4) && y < (this.height * 0.6)))) {
                 randomLevel = lowLevel;
             }
-            if (random < randomLevel && this.isFree(x, y)) {
+            if (random < randomLevel && this.isEmpty(x, y)) {
                 this.grid[x][y] = new Item.SoftBlockItem();
                 //console.log("Soft Block at [" + x + "][" + y + "]");
             }
         }
     }
+};
+
+World.prototype.addSoftBlock = function(x, y) {
+    this.grid[x][y] = new Item.SoftBlockItem();
 };
 
 World.prototype.getRandomItem = function() {
@@ -220,7 +224,7 @@ World.prototype.getPeacefulStartPoint = function(name) {
         randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
         randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
     }
-    if (!this.isFree(randomX, randomY) || !this.isEnoughSpace(randomX, randomY) || this.getPickupByCoordinates(randomX, randomY) !== null) {
+    if (!this.isEmpty(randomX, randomY) || !this.isEnoughSpace(randomX, randomY)) {
         return this.getPeacefulStartPoint(name);
     }
     if (!this.isPeaceful(randomX, randomY, name)) {
@@ -414,7 +418,7 @@ World.prototype.getWorldGrid = function() {
             world[i][j].enemyName = enemy ? enemy.name : null;
             world[i][j].pickupId = pickup ? pickup.id : null;
             world[i][j].bombId = bomb ? bomb.id : null;
-            world[i][j].free = this.isFree(i, j);
+            world[i][j].free = this.isEmpty(i, j) || this.getPickupByCoordinates(i, j) !== null;
             world[i][j].turnsToExplosion = 0;
         }
     }
@@ -451,9 +455,9 @@ World.prototype.isInside = function(x, y) {
 };
 
 // Checks if the tile is free
-World.prototype.isFree = function(x, y) {
+World.prototype.isEmpty = function(x, y) {
     if (!this.grid[x] || !this.grid[x][y]) {
-        console.log("Invalid call for isFree(" + x + ", " + y + ")");
+        console.log("Invalid call for isEmpty(" + x + ", " + y + ")");
         return false;
     }
     var tile = this.grid[x][y];
@@ -461,7 +465,7 @@ World.prototype.isFree = function(x, y) {
     var free = true;
     if (tile.type === "HardBlock" || tile.type === "SoftBlock" ||
         this.getPlayerByCoordinates(x, y) !== null || this.getEnemyByCoordinates(x, y) !== null ||
-        this.getBombByCoordinates(x, y) !== null) {
+        this.getBombByCoordinates(x, y) !== null || this.getPickupByCoordinates(x, y) !== null) {
         // Tile is not free
         free = false;
     }

@@ -8,10 +8,13 @@ function Pickup(world) {
     this.connected = true;
 
     // Choose what kind of pickup this is
-    if (Math.random() < 0.5) {
+    var rnd = Math.random();
+    if (rnd < 0.333) {
+        this.type = "Power";
+    } else if (rnd < 0.667) {
         this.type = "Shuffle";
     } else {
-        this.type = "Power";
+        this.type = "Walls";
     }
 };
 

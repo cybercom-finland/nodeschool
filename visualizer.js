@@ -45,6 +45,13 @@ exports.updateWorldState = function(state) {
     });
 };
 
+// Sends information about a new soft block to visualizers
+exports.addSoftBlock = function(x, y) {
+    watchers.forEach(function(socket) {
+        socket.emit("addSoftBlock", x, y);
+    });
+};
+
 // Sends information about a new player to visualizers
 exports.addPlayer = function(name, coords) {
     watchers.forEach(function(socket) {

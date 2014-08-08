@@ -101,6 +101,10 @@ function onWorldState(state) {
     }
 }
 
+function onAddSoftBlock(x, y) {
+    tilemap.putTile(204, x, y, "walls"); // Soft block
+}
+
 function onAddPlayer(name, coords) {
     var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
 
@@ -430,6 +434,7 @@ window.onload = function() {
     socket.emit("startvisualization");
 
     socket.on("worldstate", onWorldState);
+    socket.on("addSoftBlock", onAddSoftBlock);
     socket.on("addplayer", onAddPlayer);
     socket.on("moveplayer", onMovePlayer);
     socket.on("playerdeath", onPlayerDeath);

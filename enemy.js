@@ -128,7 +128,7 @@ Enemy.prototype.searchForPlayer = function(x, y, direction) {
     if (this.world.getPlayerByCoordinates(newX, newY)) {
         console.log("PLAYER FOUND AT: [" + newX + "][" + newY + "]");
         return [newX, newY];
-    } else if (this.world.isFree(newX, newY)) {
+    } else if (this.world.isEmpty(newX, newY)) {
         return this.searchForPlayer(newX, newY, direction);
     } else {
         return null;

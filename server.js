@@ -410,28 +410,35 @@ function movePlayer(player, action) {
                 // Check if the tile has a pickup
                 var pickup = world.getPickupByCoordinates(player.coordinates.x, player.coordinates.y);
                 if (pickup) {
-                    // Remove the pickup
-                    world.removePickup(pickup.id);
-                    visualizer.destroyPickup(pickup.id);
-
-                    // Handle different pickup types
-                    if (pickup.type === "Power") {
-                        // Increases the explosion size
-                        console.log("Pickup collected: Power");
-                        player.bombSize += 1;
-                    } else if (pickup.type === "Shuffle") {
-                        // Randomizes the entity queue order
-                        console.log("Pickup collected: Shuffle");
-                        entityQueue.shuffle();
-                    } else {
-                        console.log("Unknown pickup collected.");
-                    }
+                    collectPickup(player, pickup);
                 }
 
                 // Send information to the visualizer
                 visualizer.movePlayer(player.name, player.coordinates);
             }
         }
+    }
+}
+
+function collectPickup(player, pickup) {
+    // Remove the pickup
+    world.removePickup(pickup.id);
+    visualizer.destroyPickup(pickup.id);
+
+    // Handle different pickup types
+    if (pickup.type === "Power") {
+        // Increases the explosion size
+        console.log("Pickup collected: Power");
+        player.bombSize += 1;
+    } else if (pickup.type === "Shuffle") {
+        // Randomizes the entity queue order
+        console.log("Pickup collected: Shuffle");
+        entityQueue.shuffle();
+    } else if (pickup.type === "Walls") {
+        // Adds new walls randomly
+        addSoftBlocks(20);
+    } else {
+        console.log("Unknown pickup collected.");
     }
 }
 
@@ -510,4 +517,17 @@ function killEnemy(name) {
     console.log("Enemy " + killedEnemy + " dies!");
 
     return killedEnemy;
+}
+
+// Adds new soft blocks
+function addSoftBlocks(maxCount) {
+    for (var i = 0; i < maxCount; ++i) {
+        var x = Math.floor(Math.random() * (world.width - 2)) + 1;
+        var y = Math.floor(Math.random() * (world.height - 2)) + 1;
+        if (world.isEmpty(x, y)) {
+            // Add soft blocks only to the empty tiles
+            world.addSoftBlock(x, y);
+            visualizer.addSoftBlock(x, y);
+        }
+    }
 }
