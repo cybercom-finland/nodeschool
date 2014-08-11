@@ -281,8 +281,6 @@ function handleBombTurn(bomb) {
             // Player gets points also from the destroyed walls
             bomb.owner.score += result.explodingWalls.length * 5;
 
-            // TODO: Scoring for killed enemies
-
             // Go through all killed enemies
             result.explodingEnemyNames.forEach(function(name) {
                 var killedEnemy = killEnemy(name);
@@ -312,6 +310,12 @@ function handleBombTurn(bomb) {
                     }
                 }
             });
+
+            // Add new soft blocks if there are not enough left
+            var softBlocks = world.getSoftBlockCount();
+            if (softBlocks < 150) {
+                addSoftBlocks(150 - softBlocks, true);
+            }
 
             // Send information to the visualizer
             visualizer.bombExplosion(result.bombId, result.explodingTiles, result.explodingWalls);
@@ -436,7 +440,7 @@ function collectPickup(player, pickup) {
         entityQueue.shuffle();
     } else if (pickup.type === "Walls") {
         // Adds new walls randomly
-        addSoftBlocks(20);
+        addSoftBlocks(10, false);
     } else {
         console.log("Unknown pickup collected.");
     }
@@ -520,14 +524,19 @@ function killEnemy(name) {
 }
 
 // Adds new soft blocks
-function addSoftBlocks(maxCount) {
-    for (var i = 0; i < maxCount; ++i) {
-        var x = Math.floor(Math.random() * (world.width - 2)) + 1;
-        var y = Math.floor(Math.random() * (world.height - 2)) + 1;
-        if (world.isEmpty(x, y)) {
+function addSoftBlocks(count, addAll) {
+    for (var i = 0; i < count; ++i) {
+        var empty = false;
+        do {
+            var x = Math.floor(Math.random() * (world.width - 2)) + 1;
+            var y = Math.floor(Math.random() * (world.height - 2)) + 1;
+
             // Add soft blocks only to the empty tiles
-            world.addSoftBlock(x, y);
-            visualizer.addSoftBlock(x, y);
-        }
+            empty = world.isEmpty(x, y);
+            if (empty) {
+                world.addSoftBlock(x, y);
+                visualizer.addSoftBlock(x, y);
+            }
+        } while (!empty && addAll)
     }
 }

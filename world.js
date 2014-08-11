@@ -677,4 +677,16 @@ World.prototype.explodeBomb = function(bomb) {
     };
 }
 
+World.prototype.getSoftBlockCount = function() {
+    var count = 0;
+    for (var i = 0; i < this.width; ++i) {
+        for (var j = 0; j < this.height; ++j) {
+            if (this.grid[i][j].type === "SoftBlock") {
+                ++count;
+            }
+        }
+    }
+    return count;
+};
+
 module.exports = World;
