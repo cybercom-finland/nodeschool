@@ -272,9 +272,8 @@ function handleBombTurn(bomb) {
                         bomb.owner.score += 100;
                     } else {
                         // Negative points if the player explodes itself
-                        bomb.owner.score -= 100;
+                        bomb.owner.score -= 50;
                     }
-
                 }
             });
 
@@ -287,6 +286,10 @@ function handleBombTurn(bomb) {
                 // Give points
                 bomb.owner.score += 50;
             });
+
+            if (bomb.owner.score < 0) {
+                bomb.owner.score = 0;
+            }
 
             // Go through all destroyed pickups
             result.explodingPickupIds.forEach(function(id) {
@@ -444,6 +447,8 @@ function collectPickup(player, pickup) {
     } else {
         console.log("Unknown pickup collected.");
     }
+
+    player.score += 20;
 }
 
 // Kill the player
