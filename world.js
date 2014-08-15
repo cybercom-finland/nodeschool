@@ -13,22 +13,6 @@ var bombCounter = 0;
 var pickupCounter = 0;
 
 // Constructor for World object
-//
-// Initial list of basic characters that can be used demonstrating the world,
-// before graphics library is taken into use:
-//
-//  - '#': Block
-//  - ' ': Open space
-//  - 'X': Wall
-//  - 'Q': Bomb
-//  - '?': Pickup
-//  - '!': Enemy
-//  - <n>: Player <n>
-//
-//  TODO: This is only an initial world state for easy textual visualization.
-//  To be designed and developped further to support real functionality,
-//  e.g. bombs need timers, players need names and pickup items need details
-
 function World() {
     this.width = WIDTH;
     this.height = HEIGHT;
@@ -152,55 +136,66 @@ World.prototype.addEnemies = function(number) {
 //
 //     3 8 4
 //
-World.prototype.getPeacefulStartPoint = function(name) {
+World.prototype.getPeacefulStartPoint = function(name, callCount) {
+    callCount = callCount || 0;
+    ++callCount;
+
+    // Find a free tile
     var randomX = Math.floor((Math.random() * (this.width - 1)) + 1);
     var randomY = Math.floor((Math.random() * (this.height - 1)) + 1);
-    if (this.nextStartPoint === 1) {
-        // Upper left corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
-    } else if (this.nextStartPoint === 2) {
-        // Upper right corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
-    } else if (this.nextStartPoint === 3) {
-        // Lower left corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
-    } else if (this.nextStartPoint === 4) {
-        // Lower right corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
-    } else if (this.nextStartPoint === 5) {
-        // Upper right corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
-    } else if (this.nextStartPoint === 6) {
-        // Lower left corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
-    } else if (this.nextStartPoint === 7) {
-        // Lower right corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
-    } else if (this.nextStartPoint === 8) {
-        // Lower left corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
-    } else if (this.nextStartPoint === 9) {
-        // Lower right corner
-        randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
-        randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
-    }
-    if (!this.isEmpty(randomX, randomY) || !this.isEnoughSpace(randomX, randomY)) {
-        return this.getPeacefulStartPoint(name);
-    }
-    if (!this.isPeaceful(randomX, randomY, name)) {
-        this.nextStartPoint++;
-        if (this.nextStartPoint === 10) {
-            this.nextStartPoint = 1;
+    var i = 0;
+    do {
+        if (i > 10) {
+            this.nextStartPoint++;
+            if (this.nextStartPoint === 10) {
+                this.nextStartPoint = 1;
+            }
         }
-        return this.getPeacefulStartPoint(name);
+        ++i;
+
+        if (this.nextStartPoint === 1) {
+            // Upper left corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+        } else if (this.nextStartPoint === 2) {
+            // Upper right corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+        } else if (this.nextStartPoint === 3) {
+            // Lower left corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+        } else if (this.nextStartPoint === 4) {
+            // Lower right corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+        } else if (this.nextStartPoint === 5) {
+            // Upper right corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + 1);
+        } else if (this.nextStartPoint === 6) {
+            // Lower left corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + 1);
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+        } else if (this.nextStartPoint === 7) {
+            // Lower right corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.80));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+        } else if (this.nextStartPoint === 8) {
+            // Lower left corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.80));
+        } else if (this.nextStartPoint === 9) {
+            // Lower right corner
+            randomX = Math.floor((Math.random() * (this.width * 0.20)) + Math.floor(this.width * 0.40));
+            randomY = Math.floor((Math.random() * (this.height * 0.20)) + Math.floor(this.height * 0.40));
+        }
+    } while (!this.isEmpty(randomX, randomY));
+
+    if (callCount < 10) {
+        if (!this.isEnoughSpace(randomX, randomY) || !this.isPeaceful(randomX, randomY, name)) {
+            return this.getPeacefulStartPoint(name, callCount);
+        }
     }
 
     this.nextStartPoint++;
@@ -461,7 +456,6 @@ World.prototype.isBlocked = function(x, y) {
 
 // Checks if there is enough space for startup
 World.prototype.isEnoughSpace = function(x, y, direction) {
-    //console.log("isEnoughSpace(" + x + ", " + y + ")");
     var freeAtNorth = this.grid[x][y - 1] === "OpenSpace" ? true : false;
     var freeAtEast = this.grid[x + 1][y] === "OpenSpace" ? true : false;
     var freeAtSouth = this.grid[x][y + 1] === "OpenSpace" ? true : false;
