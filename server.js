@@ -227,7 +227,6 @@ function handlePlayerTurn(player) {
 }
 
 function handleEnemyTurn(enemy) {
-
     // Move this player to the back of the queue
     entityQueue.moveFirstToBack();
 
@@ -303,7 +302,7 @@ function handleBombTurn(bomb) {
             // Go through all destroyed walls
             result.explodingWalls.forEach(function(c) {
                 // Make sure that some previously exploded bomb has not already destroyed this wall
-                if (world.grid[c.x][c.y].type === "SoftBlock") {
+                if (world.isSoftBlock(c.x, c.y)) {
                     world.clearTile(c.x, c.y);
 
                     // There is a small change that a pickup will appear

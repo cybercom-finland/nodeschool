@@ -1,4 +1,3 @@
-var Item = require("./item.js");
 var Player = require("./player.js");
 var Enemy = require("./enemy.js");
 var Bomb = require("./bomb.js");
@@ -49,7 +48,7 @@ function World() {
         this.grid[x] = new Array(this.height);
         for (var y = 0; y < this.height; y++) {
             if (x === 0 || y === 0 || x === this.width - 1 || y === this.height - 1) {
-                this.grid[x][y] = new Item.HardBlockItem();
+                this.grid[x][y] = "HardBlock";
             }
         }
     }
@@ -57,45 +56,17 @@ function World() {
     this.addStaticItemsToWorld();
 
     this.addEnemies();
-    console.log(this.enemies);
     this.nextStartPoint = 1;
-
-    //console.log(JSON.stringify(this.grid))
-    console.log("World:");
-    for (var y = 0; y < this.grid[0].length; y++) {
-        var line = "    ";
-        for (var x = 0; x < this.grid.length; x++) {
-            var c = this.grid[x][y].value;
-            if (c === "#") {
-                line += c;
-            } else if (c === "X") {
-                line += clc.blackBright(c);
-            } else {
-                c = " ";
-                var enemyNames = Object.keys(this.enemies);
-                for (var i = 0; i < enemyNames.length; ++i) {
-                    var enemy = this.enemies[enemyNames[i]];
-                    if (enemy.coordinates.x === x && enemy.coordinates.y === y) {
-                        c = clc.yellowBright("E");
-                        break;
-                    }
-                }
-                line += c;
-            }
-        }
-        console.log(line);
-    }
 }
 
 World.prototype.addStaticItemsToWorld = function() {
-
     // Create "bomberman level 1" like world having hard blocks at (evenX, evenY) coordinates
     for (var x = 1; x < this.width - 1; x++) {
         for (var y = 1; y < this.height - 1; y++) {
             if (x % 2 || y % 2 || x === (this.width - 2) || y === (this.height - 2)) {
-                this.grid[x][y] = new Item.OpenSpaceItem();
+                this.grid[x][y] = "OpenSpace";
             } else {
-                this.grid[x][y] = new Item.HardBlockItem();
+                this.grid[x][y] = "HardBlock";
             }
         }
     }
@@ -110,8 +81,7 @@ World.prototype.addHardBlocks = function() {
         for (var y = 1; y < this.height - 1; y++) {
             var random = Math.random();
             if (random < 0.2) {
-                this.grid[x][y] = new Item.HardBlockItem();
-                //console.log("Hard Block at [" + x + "][" + y + "]");
+                this.grid[x][y] = "HardBlock";
             }
         }
     }
@@ -135,30 +105,29 @@ World.prototype.addSoftBlocks = function() {
                 randomLevel = lowLevel;
             }
             if (random < randomLevel && this.isEmpty(x, y)) {
-                this.grid[x][y] = new Item.SoftBlockItem();
-                //console.log("Soft Block at [" + x + "][" + y + "]");
+                this.grid[x][y] = "SoftBlock";
             }
         }
     }
 };
 
 World.prototype.addSoftBlock = function(x, y) {
-    this.grid[x][y] = new Item.SoftBlockItem();
+    this.grid[x][y] = "SoftBlock";
 };
 
 World.prototype.getRandomItem = function() {
     var random = Math.random();
     if (random < 0.2) {
-        return new Item.HardBlockItem();
+        return "HardBlock";
     } else if (random < 0.5) {
-        return new Item.SoftBlockItem();
+        return "SoftBlock";
     } else {
-        return new Item.OpenSpaceItem();
+        return "OpenSpace";
     }
 }
 
 World.prototype.clearTile = function(x, y) {
-    this.grid[x][y] = new Item.OpenSpaceItem();
+    this.grid[x][y] = "OpenSpace";
 }
 
 World.prototype.addEnemies = function(number) {
@@ -184,7 +153,6 @@ World.prototype.addEnemies = function(number) {
 //     3 8 4
 //
 World.prototype.getPeacefulStartPoint = function(name) {
-    console.log("getPeacefulStartPoint(" + this.nextStartPoint + ")");
     var randomX = Math.floor((Math.random() * (this.width - 1)) + 1);
     var randomY = Math.floor((Math.random() * (this.height - 1)) + 1);
     if (this.nextStartPoint === 1) {
@@ -247,8 +215,8 @@ World.prototype.getStartPointForNewPlayer = function(name) {
     var startPoint = this.getPeacefulStartPoint(name);
     var randomX = startPoint[0];
     var randomY = startPoint[1];
-    console.log("Start point: [" + randomX + "][" + randomY + "]");
-    if (this.grid[randomX][randomY] && this.grid[randomX][randomY].value === ' ') {
+
+    if (this.grid[randomX][randomY] && this.grid[randomX][randomY] === "OpenSpace") {
         return {
             x: randomX,
             y: randomY
@@ -405,8 +373,8 @@ World.prototype.getWorldGrid = function() {
         for (var j = 0; j < this.height; ++j) {
             // Information about hard and soft blocks
             world[i][j] = {
-                hardBlock: this.grid[i][j].type === "HardBlock",
-                softBlock: this.grid[i][j].type === "SoftBlock"
+                hardBlock: this.grid[i][j] === "HardBlock",
+                softBlock: this.grid[i][j] === "SoftBlock"
             };
 
             // Information about players, enemies, pickups and bombs
@@ -463,7 +431,7 @@ World.prototype.isEmpty = function(x, y) {
     var tile = this.grid[x][y];
 
     var free = true;
-    if (tile.type === "HardBlock" || tile.type === "SoftBlock" ||
+    if (tile === "HardBlock" || tile === "SoftBlock" ||
         this.getPlayerByCoordinates(x, y) !== null || this.getEnemyByCoordinates(x, y) !== null ||
         this.getBombByCoordinates(x, y) !== null || this.getPickupByCoordinates(x, y) !== null) {
         // Tile is not free
@@ -482,7 +450,7 @@ World.prototype.isBlocked = function(x, y) {
     var tile = this.grid[x][y];
 
     var blocked = false;
-    if (tile.type === "HardBlock" || tile.type === "SoftBlock" ||
+    if (tile === "HardBlock" || tile === "SoftBlock" ||
         this.getBombByCoordinates(x, y) !== null) {
         // Tile is blocked
         blocked = true;
@@ -493,11 +461,11 @@ World.prototype.isBlocked = function(x, y) {
 
 // Checks if there is enough space for startup
 World.prototype.isEnoughSpace = function(x, y, direction) {
-    console.log("isEnoughSpace(" + x + ", " + y + ")");
-    var freeAtNorth = this.grid[x][y - 1].type === "OpenSpace" ? true : false;
-    var freeAtEast = this.grid[x + 1][y].type === "OpenSpace" ? true : false;
-    var freeAtSouth = this.grid[x][y + 1].type === "OpenSpace" ? true : false;
-    var freeAtWest = this.grid[x - 1][y].type === "OpenSpace" ? true : false;
+    //console.log("isEnoughSpace(" + x + ", " + y + ")");
+    var freeAtNorth = this.grid[x][y - 1] === "OpenSpace" ? true : false;
+    var freeAtEast = this.grid[x + 1][y] === "OpenSpace" ? true : false;
+    var freeAtSouth = this.grid[x][y + 1] === "OpenSpace" ? true : false;
+    var freeAtWest = this.grid[x - 1][y] === "OpenSpace" ? true : false;
 
     /// Find an 'L' corner. That's enough open space to explode a bomb safely.
     if ((freeAtNorth && freeAtEast) || (freeAtEast && freeAtSouth) ||
@@ -639,7 +607,7 @@ World.prototype.explodeBomb = function(bomb) {
     var explodingPickupIds = [];
 
     explodingTiles.forEach(function(c) {
-        if (self.grid[c.x][c.y].type === "SoftBlock") {
+        if (self.grid[c.x][c.y] === "SoftBlock") {
             explodingWalls.push(c);
         }
 
@@ -681,12 +649,24 @@ World.prototype.getSoftBlockCount = function() {
     var count = 0;
     for (var i = 0; i < this.width; ++i) {
         for (var j = 0; j < this.height; ++j) {
-            if (this.grid[i][j].type === "SoftBlock") {
+            if (this.grid[i][j] === "SoftBlock") {
                 ++count;
             }
         }
     }
     return count;
 };
+
+World.prototype.isSoftBlock = function(x, y) {
+    return this.isInside(x, y) && this.grid[x][y] === "SoftBlock";
+}
+
+World.prototype.isHardBlock = function(x, y) {
+    return this.isInside(x, y) && this.grid[x][y] === "HardBlock";
+}
+
+World.prototype.isOpenSpace = function(x, y) {
+    return this.isInside(x, y) && this.grid[x][y] === "OpenSpace";
+}
 
 module.exports = World;

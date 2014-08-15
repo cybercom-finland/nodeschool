@@ -1,5 +1,3 @@
-var Item = require("./item.js");
-
 function Entity(world) {
     this.coordinates = {};
     this.world = world;

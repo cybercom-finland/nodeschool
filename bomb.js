@@ -21,12 +21,11 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = -1; i >= -this.size; --i) {
         var x = this.coordinates.x + i;
         if (x >= 0 && x < this.world.width) {
-            var type = this.world.grid[x][this.coordinates.y].type;
-            if (type === "HardBlock") {
+            if (this.world.isHardBlock(x, this.coordinates.y)) {
                 break;
             }
             coords.push({ x: x, y: this.coordinates.y });
-            if (type === "SoftBlock") {
+            if (this.world.isSoftBlock(x, this.coordinates.y)) {
                 break;
             }
         }
@@ -36,12 +35,11 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = 1; i <= this.size; ++i) {
         var x = this.coordinates.x + i;
         if (x >= 0 && x < this.world.width) {
-            var type = this.world.grid[x][this.coordinates.y].type;
-            if (type === "HardBlock") {
+            if (this.world.isHardBlock(x, this.coordinates.y)) {
                 break;
             }
             coords.push({ x: x, y: this.coordinates.y });
-            if (type === "SoftBlock") {
+            if (this.world.isSoftBlock(x, this.coordinates.y)) {
                 break;
             }
         }
@@ -51,26 +49,25 @@ Bomb.prototype.getExplodingCoordinates = function() {
     for (i = -1; i >= -this.size; --i) {
         var y = this.coordinates.y + i;
         if (y >= 0 && y < this.world.height) {
-            var type = this.world.grid[this.coordinates.x][y].type;
-            if (type === "HardBlock") {
+            if (this.world.isHardBlock(this.coordinates.x, y)) {
                 break;
             }
             coords.push({ x: this.coordinates.x, y: y });
-            if (type === "SoftBlock") {
+            if (this.world.isSoftBlock(this.coordinates.x, y)) {
                 break;
-            }        }
+            }
+        }
     }
 
     // Down
     for (i = 1; i <= this.size; ++i) {
         var y = this.coordinates.y + i;
         if (y >= 0 && y < this.world.height) {
-            var type = this.world.grid[this.coordinates.x][y].type;
-            if (type === "HardBlock") {
+            if (this.world.isHardBlock(this.coordinates.x, y)) {
                 break;
             }
             coords.push({ x: this.coordinates.x, y: y });
-            if (type === "SoftBlock") {
+            if (this.world.isSoftBlock(this.coordinates.x, y)) {
                 break;
             }
         }

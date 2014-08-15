@@ -89,9 +89,9 @@ function onWorldState(state) {
 
     for (var y = 0; y < height; y++) {
         for (var x = 0; x < width; x++) {
-            if (state[x][y].type === "HardBlock") {
+            if (state[x][y] === "HardBlock") {
                 tilemap.putTile(280, x, y, layerStatic); // Hard block
-            } else if (state[x][y].type === "SoftBlock") {
+            } else if (state[x][y] === "SoftBlock") {
                 tilemap.putTile(196, x, y, layerStatic); // Empty space
                 tilemap.putTile(204, x, y, layerWalls); // Soft block
             } else {
