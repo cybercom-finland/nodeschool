@@ -431,18 +431,21 @@ function collectPickup(player, pickup) {
     world.removePickup(pickup.id);
     visualizer.destroyPickup(pickup.id);
 
+    console.log("Pickup collected: " + pickup);
+
     // Handle different pickup types
     if (pickup.type === "Power") {
         // Increases the explosion size
-        console.log("Pickup collected: Power");
         player.bombSize += 1;
     } else if (pickup.type === "Shuffle") {
         // Randomizes the entity queue order
-        console.log("Pickup collected: Shuffle");
         entityQueue.shuffle();
     } else if (pickup.type === "Walls") {
         // Adds new walls randomly
         addSoftBlocks(10, false);
+    } else if (pickup.type === "Bomb") {
+        // Increases the number of bombs the player can drop
+        player.maxAllowedBombs += 1;
     } else {
         console.log("Unknown pickup collected.");
     }

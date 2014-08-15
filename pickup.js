@@ -9,17 +9,19 @@ function Pickup(world) {
 
     // Choose what kind of pickup this is
     var rnd = Math.random();
-    if (rnd < 0.333) {
+    if (rnd < 0.25) {
         this.type = "Power";
-    } else if (rnd < 0.667) {
+    } else if (rnd < 0.5) {
         this.type = "Shuffle";
-    } else {
+    } else if (rnd < 0.75) {
         this.type = "Walls";
+    } else {
+        this.type = "Bomb";
     }
 };
 
 Pickup.prototype.toString = function() {
-    return "Pickup";
+    return this.type;
 }
 
 module.exports = Pickup;
