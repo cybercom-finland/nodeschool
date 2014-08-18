@@ -38,8 +38,8 @@ function World() {
     }
 
     this.addStaticItemsToWorld();
-
     this.addEnemies();
+
     this.nextStartPoint = 1;
 }
 
@@ -55,24 +55,6 @@ World.prototype.addStaticItemsToWorld = function() {
         }
     }
 
-    // Add soft blocks to random free tiles
-    this.addSoftBlocks();
-}
-
-// Adds hard blocks to the empty world
-World.prototype.addHardBlocks = function() {
-    for (var x = 1; x < this.width - 1; x++) {
-        for (var y = 1; y < this.height - 1; y++) {
-            var random = Math.random();
-            if (random < 0.2) {
-                this.grid[x][y] = "HardBlock";
-            }
-        }
-    }
-};
-
-// Adds soft blocks to the grid having hard blocks inserted
-World.prototype.addSoftBlocks = function() {
     // The soft blocks are added to random free spaces with the following rules:
     // - The world is divided into 5 x 5 "grids"
     // - Every other grid to both directions (3 x 3) have more open space having 0.1 probability of Soft Blocks
@@ -95,25 +77,6 @@ World.prototype.addSoftBlocks = function() {
     }
 };
 
-World.prototype.addSoftBlock = function(x, y) {
-    this.grid[x][y] = "SoftBlock";
-};
-
-World.prototype.getRandomItem = function() {
-    var random = Math.random();
-    if (random < 0.2) {
-        return "HardBlock";
-    } else if (random < 0.5) {
-        return "SoftBlock";
-    } else {
-        return "OpenSpace";
-    }
-}
-
-World.prototype.clearTile = function(x, y) {
-    this.grid[x][y] = "OpenSpace";
-}
-
 World.prototype.addEnemies = function(number) {
     for (var i = 0; i < this.enemyCount; i++) {
         var enemyName = "Enemy" + (i + 1);
@@ -123,6 +86,14 @@ World.prototype.addEnemies = function(number) {
         }
         this.addEnemy(enemyName, enemyType);
     }
+}
+
+World.prototype.addSoftBlock = function(x, y) {
+    this.grid[x][y] = "SoftBlock";
+};
+
+World.prototype.clearTile = function(x, y) {
+    this.grid[x][y] = "OpenSpace";
 }
 
 // Gets a peaceful start point for new (reborn) player
