@@ -352,7 +352,6 @@ World.prototype.getWorldGrid = function() {
             world[i][j].enemyName = enemy ? enemy.name : null;
             world[i][j].pickupId = pickup ? pickup.id : null;
             world[i][j].bombId = bomb ? bomb.id : null;
-            world[i][j].free = this.isEmpty(i, j) || this.getPickupByCoordinates(i, j) !== null;
             world[i][j].turnsToExplosion = 0;
         }
     }

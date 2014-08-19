@@ -40,30 +40,56 @@ function handleTurn(data) {
     var dx = targetLocation.x - x;
     var dy = targetLocation.y - y;
 
+    var path = shortestPath(state.coordinates, targetLocation);
+    if (path.length > 0) {
+        dx = path[0].x - x;
+        dy = path[0].y - y;
+    }
+
     // Get the signs
     var sx = dx > 0 ? 1 : dx < 0 ? -1 : 0;
     var sy = dy > 0 ? 1 : dy < 0 ? -1 : 0;
+    if (sx != 0 && sy != 0) if (Math.random() < 0.5) sx = 0; else sy = 0;
 
     // Try to get away if the current tile is going to explode
     if (state.world[x][y].turnsToExplosion === 1) {
-        if (isSafe(x + sx, y)) {
-            action = getDirection(sx, 0);
-        } else if (isSafe(x, y + sy)) {
-            action = getDirection(0, sy);
-        } else if (isSafe(x - sx, y)) {
-            action = getDirection(-sx, 0);
-        } else if (isSafe(x, y - sy)) {
-            action = getDirection(0, -sy);
+        if (isSafe(x + 1, y)) {
+            action = getDirection(1, 0);
+        } else if (isSafe(x, y + 1)) {
+            action = getDirection(0, 1);
+        } else if (isSafe(x - 1, y)) {
+            action = getDirection(-1, 0);
+        } else if (isSafe(x, y - 1)) {
+            action = getDirection(0, -1);
         } else {
             // The player is going to die. Try to leave a bomb
             action = "BOMB";
         }
     } else {
+        if (state.world[x][y].bombId != null) {
+            // Move to a direction that has the largest number of free tiles
+            var r = calculateEmptyTiles(x, y);
+            if (r.largest === "UP") {
+                sx = 0;
+                sy = -1;
+            }
+            if (r.largest === "DOWN") {
+                sx = 0;
+                sy = 1;
+            }
+            if (r.largest === "RIGHT") {
+                sx = 1;
+                sy = 0;
+            }
+            if (r.largest === "LEFT") {
+                sx = -1;
+                sy = 0;
+            }
+        }
+
         // Current tile is safe. Try to move towards the target tile
-        if (isSafe(x + sx, y)) {
-            action = getDirection(sx, 0);
-        } else if (isSafe(x, y + sy)) {
-            action = getDirection(0, sy);
+        if (isSafe(x + sx, y + sy)) {
+            action = getDirection(sx, sy);
         } else {
             // The straight path is blocked
             if (state.bombsAvailable > 0 && !state.world[x][y].turnsToExplosion) {
@@ -72,10 +98,14 @@ function handleTurn(data) {
                 targetLocation = getTargetLocation();
             } else {
                 // Try to move away and select a new target
-                if (isSafe(x - sx, y)) {
-                    action = getDirection(-sx, 0);
-                } else if (isSafe(x, y - sy)) {
-                    action = getDirection(0, -sy);
+                if (isSafe(x + 1, y)) {
+                    action = getDirection(1, 0);
+                } else if (isSafe(x, y + 1)) {
+                    action = getDirection(0, 1);
+                } else if (isSafe(x - 1, y)) {
+                    action = getDirection(-1, 0);
+                } else if (isSafe(x, y - 1)) {
+                    action = getDirection(0, -1);
                 }
                 targetLocation = getTargetLocation();
             }
@@ -93,9 +123,103 @@ function handleDeath(data) {
 
 // Helper functions are below
 
-// Checks whether a tile is free and not exploding in the next turn
+// Calculates how many empty tiles there are in different directions
+function calculateEmptyTiles(x, y) {
+    var width = state.worldWidth;
+    var height = state.worldHeight;
+
+    function checkTile(x, y) {
+        var res = 0;
+        var queue = [];
+        var visited = new Array(width * height);
+        for (var i = 0; i < visited.length; ++i) {
+            visited[i] = false;
+        }
+
+        queue.push({ x: x, y: y });
+        while (queue.length > 0) {
+            var c = queue.pop();
+            visited[c.y * width + c.x] = true;
+
+            if (isFree(c.x, c.y)) {
+                if (!visited[c.y * width + c.x - 1]) {
+                    queue.push({ x: c.x - 1, y: c.y });
+                }
+                if (!visited[c.y * width + c.x + 1]) {
+                    queue.push({ x: c.x + 1, y: c.y });
+                }
+                if (!visited[(c.y - 1) * width + c.x]) {
+                    queue.push({ x: c.x, y: c.y - 1});
+                }
+                if (!visited[(c.y + 1) * width + c.x]) {
+                    queue.push({ x: c.x, y: c.y + 1 });
+                }
+
+                ++res;
+            }
+        }
+
+        return res;
+    }
+
+    var sizes = [
+        checkTile(x, y - 1),
+        checkTile(x, y + 1),
+        checkTile(x + 1, y),
+        checkTile(x - 1, y)
+    ];
+    var largest = sizes.indexOf(Math.max.apply(null, sizes));
+
+    // Returns the number of empty tiles in different directions and the largest direction as a string
+    return {
+        up: sizes[0],
+        down: sizes[1],
+        right: sizes[2],
+        left: sizes[3],
+        largest: largest === 0 ? "UP" : largest === 1 ? "DOWN" : largest === 2 ? "RIGHT" : "LEFT"
+    };
+}
+
+// Checks whether the coordinates are inside the game area
+function isInside(x, y) {
+    return !(x < 1 || x > state.worldWidth - 2 || y < 1 || y > state.worldHeight - 2);
+}
+
+// Checks whether a tile is free
+function isFree(x, y) {
+    if (!isInside(x, y)) {
+        return false;
+    }
+
+    var tile = state.world[x][y];
+    return tile.playerName === null &&
+           tile.enemyName === null &&
+           tile.bombId === null &&
+           !tile.hardBlock &&
+           !tile.softBlock;
+}
+
+// Checks whether an enemy is near
+function isEnemyNearby(x, y) {
+    if (!isInside(x, y)) {
+        return false;
+    }
+
+    return !(state.world[x - 1][y].enemyName === null &&
+             state.world[x + 1][y].enemyName === null &&
+             state.world[x][y - 1].enemyName === null &&
+             state.world[x][y + 1].enemyName === null);
+}
+
+// Checks whether a tile is free and safe for the next turn
 function isSafe(x, y) {
-    return state.world[x][y].free && state.world[x][y].turnsToExplosion != 1;
+    if (!isInside(x, y)) {
+        return false;
+    }
+
+    return isFree(x, y) &&
+           !isEnemyNearby(x, y) &&
+           state.world[x][y].turnsToExplosion != 1;
 }
 
 // Returns a direction as a string
@@ -112,9 +236,9 @@ function getTargetLocation() {
     var location;
     var pickupIds = Object.keys(state.pickups);
 
-    // If there are pickups, select one of them as a target with a certain probability
-    if (pickupIds.length > 0 && Math.random() < 0.8) {
-        // Select the nearest pickup as a target
+    // If there are pickups, select one of them
+    if (pickupIds.length > 0) {
+        // Select the nearest reachable pickup as a target
         var shortest = Infinity;
         for (var i = 0; i < pickupIds.length; ++i) {
             var pickup = state.pickups[pickupIds[i]];
@@ -124,10 +248,10 @@ function getTargetLocation() {
                 continue;
             }
 
-            // TODO: Replace the squared Euclidean distance with the actual number of tiles needed to reach this pickup
-            var dist = Math.pow(state.coordinates.x - pickup.coordinates.x, 2) + Math.pow(state.coordinates.y - pickup.coordinates.y, 2);
-            if (dist < shortest) {
-                shortest = dist;
+            // Calculate the distance to the pickup
+            var path = shortestPath(state.coordinates, pickup.coordinates);
+            if (path.length > 0 && path.length < shortest) {
+                shortest = path.length;
                 location = pickup.coordinates;
             }
         }
@@ -201,8 +325,8 @@ function shortestPath(start, end) {
         for (var i = 0; i < 4; ++i) {
             var neighbor = neighbors[i];
 
-            // Skip neighbors that are closed ot that are not free
-            if (neighbor.closed || !state.world[neighbor.x][neighbor.y].free) {
+            // Skip neighbors that are closed or that are not free
+            if (neighbor.closed || !isFree(neighbor.x, neighbor.y)) {
                 continue;
             }
 
