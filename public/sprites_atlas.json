@@ -1,0 +1,145 @@
+{
+    "frames": [
+        {
+            "filename": "HardBlock",
+            "frame": {"x":0,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "SoftBlock",
+            "frame": {"x":0,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "OpenSpace",
+            "frame": {"x":0,"y":0,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Player1FaceLeft",
+            "frame": {"x":0,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "Player1FaceRight",
+            "frame": {"x":32,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "Player1FaceDown",
+            "frame": {"x":64,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "Player1FaceUp",
+            "frame": {"x":96,"y":0,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Player2FaceLeft",
+            "frame": {"x":0,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "Player2FaceRight",
+            "frame": {"x":32,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "Player2FaceDown",
+            "frame": {"x":64,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "Player2FaceUp",
+            "frame": {"x":96,"y":32,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Player3FaceLeft",
+            "frame": {"x":0,"y":64,"w":32,"h":32}
+        },
+        {
+            "filename": "Player3FaceRight",
+            "frame": {"x":32,"y":64,"w":32,"h":32}
+        },
+        {
+            "filename": "Player3FaceDown",
+            "frame": {"x":64,"y":64,"w":32,"h":32}
+        },
+        {
+            "filename": "Player3FaceUp",
+            "frame": {"x":96,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Player4FaceLeft",
+            "frame": {"x":0,"y":96,"w":32,"h":32}
+        },
+        {
+            "filename": "Player4FaceRight",
+            "frame": {"x":32,"y":96,"w":32,"h":32}
+        },
+        {
+            "filename": "Player4FaceDown",
+            "frame": {"x":64,"y":96,"w":32,"h":32}
+        },
+        {
+            "filename": "Player4FaceUp",
+            "frame": {"x":96,"y":96,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Enemy1FaceLeft",
+            "frame": {"x":0,"y":128,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy1FaceRight",
+            "frame": {"x":32,"y":128,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy1FaceDown",
+            "frame": {"x":64,"y":128,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy1FaceUp",
+            "frame": {"x":96,"y":128,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Enemy2FaceLeft",
+            "frame": {"x":0,"y":160,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy2FaceRight",
+            "frame": {"x":32,"y":160,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy2FaceDown",
+            "frame": {"x":64,"y":160,"w":32,"h":32}
+        },
+        {
+            "filename": "Enemy2FaceUp",
+            "frame": {"x":96,"y":160,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Bomb1",
+            "frame": {"x":0,"y":192,"w":32,"h":32}
+        },
+        {
+            "filename": "Bomb2",
+            "frame": {"x":32,"y":192,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionMiddle1",
+            "frame": {"x":128,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionMiddle2",
+            "frame": {"x":128,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionMiddle3",
+            "frame": {"x":128,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "Pickup",
+            "frame": {"x":128,"y":96,"w":32,"h":32}
+        }
+    ]
+}

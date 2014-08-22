@@ -15,7 +15,7 @@ exports.addWatcher = function(socket, world) {
         socket.emit("addenemy", name, world.enemies[name].type, world.enemies[name].coordinates);
     });
     Object.keys(world.players).forEach(function(name) {
-        socket.emit("addplayer", name, world.players[name].coordinates);
+        socket.emit("addplayer", name, world.players[name].number, world.players[name].coordinates);
     });
 
     Object.keys(world.bombs).forEach(function(id) {
@@ -53,9 +53,9 @@ exports.addSoftBlock = function(x, y) {
 };
 
 // Sends information about a new player to visualizers
-exports.addPlayer = function(name, coords) {
+exports.addPlayer = function(name, number, coords) {
     watchers.forEach(function(socket) {
-        socket.emit("addplayer", name, coords);
+        socket.emit("addplayer", name, number, coords);
     });
 }
 

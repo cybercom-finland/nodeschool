@@ -10,51 +10,16 @@ var game;
 var tilemap;
 
 // Tile size in pixels
-var TILESIZE = 16;
+var TILESIZE = 32;
 
-// Scaling factor for scaling the graphics
-var SCALE = 2;
 // Game world coordinates to separate the actual game area from the background
 var GAME_WORLD = {
     offsetX: 20,
     offsetY: 72,
-    width: 39 * TILESIZE * SCALE,
-    height: 19 * TILESIZE * SCALE
+    width: 39 * TILESIZE,
+    height: 19 * TILESIZE
 };
-// Indexes of textures in the sprite sheet (atlas)
-var TEXTURES = {
-    HardBlock: 0,
-    SoftBlock: 1,
-    OpenSpace: 2,
-    Player1FaceDown: 3,
-    Player1FaceUp: 4,
-    Player1FaceRight: 5,
-    Player1FaceLeft: 6,
-    Bomb7: 7,
-    Bomb6: 8,
-    Bomb5: 9,
-    Bomb4: 10,
-    Bomb3: 11,
-    Bomb2: 12,
-    Bomb1: 13,
-    Bomb0: 14,
-    Bomb0Left: 15,
-    Bomb0Right: 16,
-    Bomb0Up: 17,
-    Bomb0Down: 18,
-    Explosion1: 19,
-    Explosion2: 20,
-    Explosion3: 21,
-    Pickup: 22,
-    Enemy1FaceDown: 23,
-    Enemy1FaceUp: 24,
-    Enemy1FaceRight: 25,
-    Enemy1FaceLeft: 26,
-    Enemy2FaceDown: 27,
-    Enemy2FaceUp: 28,
-    Enemy2FaceRight: 29,
-    Enemy2FaceLeft: 30
-};
+
 
 // Player colors
 var COLORS = [ 0xF08080, 0x90EE90, 0x87CEFA, 0xF0E68C ];
@@ -65,9 +30,8 @@ var ENEMY_CARD_WIDTH = 100;
 var BOMB_CARD_WIDTH = 50;
 var CARD_HEIGHT = 100;
 
-function addSprite(x, y, idxTexture, flip) {
-    var sprite = game.add.sprite(x * TILESIZE * SCALE + GAME_WORLD.offsetX, y * TILESIZE * SCALE + GAME_WORLD.offsetY, "bomber_atlas", idxTexture);
-    sprite.scale.setTo(SCALE, SCALE);
+function addSprite(x, y, texture) {
+    var sprite = game.add.sprite(x * TILESIZE + GAME_WORLD.offsetX, y * TILESIZE + GAME_WORLD.offsetY, "sprites_atlas", texture);
     sprite.smoothed = false;
 
     return sprite;
@@ -78,35 +42,34 @@ function onWorldState(state) {
     height = state[0].length;
 
     var layerStatic = tilemap.create("static", width, height, TILESIZE, TILESIZE);
-    layerStatic.scale = { x: SCALE, y: SCALE };
     layerStatic.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
     layerStatic.smoothed = false;
 
     var layerWalls = tilemap.createBlankLayer("walls", width, height, TILESIZE, TILESIZE);
-    layerWalls.scale = { x: SCALE, y: SCALE };
     layerWalls.cameraOffset = new Phaser.Point(GAME_WORLD.offsetX, GAME_WORLD.offsetY);
     layerWalls.smoothed = false;
 
     for (var y = 0; y < height; y++) {
         for (var x = 0; x < width; x++) {
             if (state[x][y] === "HardBlock") {
-                tilemap.putTile(280, x, y, layerStatic); // Hard block
+                tilemap.putTile(69, x, y, layerStatic); // Hard block
             } else if (state[x][y] === "SoftBlock") {
-                tilemap.putTile(196, x, y, layerStatic); // Empty space
-                tilemap.putTile(204, x, y, layerWalls); // Soft block
+                tilemap.putTile(70, x, y, layerStatic); // Empty space
+                tilemap.putTile(68, x, y, layerWalls); // Soft block
             } else {
-                tilemap.putTile(196, x, y, layerStatic); // Empty space
+                tilemap.putTile(70, x, y, layerStatic); // Empty space
             }
         }
     }
 }
 
 function onAddSoftBlock(x, y) {
-    tilemap.putTile(204, x, y, "walls"); // Soft block
+    tilemap.putTile(68, x, y, "walls"); // Soft block
 }
 
-function onAddPlayer(name, coords) {
-    var sprite = addSprite(coords.x, coords.y, TEXTURES.Player1FaceDown);
+function onAddPlayer(name, number, coords) {
+    var num = number % 4 + 1;
+    var sprite = addSprite(coords.x, coords.y, "Player" + num + "FaceDown");
 
     var card;
     card = game.add.group();
@@ -144,7 +107,8 @@ function onAddPlayer(name, coords) {
         sprite: sprite,
         card: card,
         scoreItem: scoreItem,
-        cross: cross
+        cross: cross,
+        number: num
     };
 
     if (sprite.x < 0 || sprite.y < 0) {
@@ -154,33 +118,27 @@ function onAddPlayer(name, coords) {
 }
 
 function onMovePlayer(name, coords) {
-    var sprite = players[name].sprite;
+    var player = players[name];
+    var sprite = player.sprite;
 
     var oldX = sprite.x;
     var oldY = sprite.y;
-    sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
-    sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+    var newX = coords.x * TILESIZE + GAME_WORLD.offsetX;
+    var newY = coords.y * TILESIZE + GAME_WORLD.offsetY;
 
-    var flip = false;
-
-    if (oldX < sprite.x) {
-        sprite.frame = TEXTURES.Player1FaceRight;
-    } else if (oldX > sprite.x) {
-        sprite.frame = TEXTURES.Player1FaceLeft;
-        flip = true;
-    } else if (oldY < sprite.y) {
-        sprite.frame = TEXTURES.Player1FaceDown;
+    if (oldX < newX) {
+        sprite.frameName = "Player" + player.number + "FaceRight";
+    } else if (oldX > newX) {
+        sprite.frameName = "Player" + player.number + "FaceLeft";
+    } else if (oldY < newY) {
+        sprite.frameName = "Player" + player.number + "FaceDown";
     } else {
-        sprite.frame = TEXTURES.Player1FaceUp;
+        sprite.frameName = "Player" + player.number + "FaceUp";
     }
 
-    if (flip) {
-        sprite.anchor.setTo(1, 0);
-        sprite.scale.x = -SCALE;
-    } else {
-        sprite.anchor.setTo(0, 0);
-        sprite.scale.x = SCALE;
-    }
+    var tween = game.add.tween(sprite);
+    tween.to({ x: newX, y: newY }, 300);
+    tween.start();
 }
 
 function onPlayerDeath(name) {
@@ -189,8 +147,8 @@ function onPlayerDeath(name) {
 
 function onPlayerRespawn(name, coords) {
     players[name].sprite.visible = true;
-    players[name].sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
-    players[name].sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+    players[name].sprite.x = coords.x * TILESIZE + GAME_WORLD.offsetX;
+    players[name].sprite.y = coords.y * TILESIZE + GAME_WORLD.offsetY;
 }
 
 function onPlayerDisconnect(name) {
@@ -198,9 +156,9 @@ function onPlayerDisconnect(name) {
 }
 
 function onAddEnemy(name, type, coords) {
-    var texture = TEXTURES.Enemy1FaceDown;
+    var texture = "Enemy1FaceDown";
     if (type === 2) {
-        texture = TEXTURES.Enemy2FaceDown;
+        texture = "Enemy2FaceDown";
     }
     var sprite = addSprite(coords.x, coords.y, texture);
 
@@ -251,41 +209,34 @@ function onMoveEnemy(name, type, coords) {
 
     var oldX = sprite.x;
     var oldY = sprite.y;
-    sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
-    sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
+    var newX = coords.x * TILESIZE + GAME_WORLD.offsetX;
+    var newY = coords.y * TILESIZE + GAME_WORLD.offsetY;
 
-    var flip = false;
-
-    if (oldX < sprite.x) {
-        sprite.frame = TEXTURES.Enemy1FaceRight;
+    if (oldX < newX) {
+        sprite.frameName = "Enemy1FaceRight";
         if (type === 2) {
-            sprite.frame = TEXTURES.Enemy2FaceRight;
+            sprite.frameName = "Enemy2FaceRight";
         }
-    } else if (oldX > sprite.x) {
-        sprite.frame = TEXTURES.Enemy1FaceLeft;
+    } else if (oldX > newX) {
+        sprite.frameName = "Enemy1FaceLeft";
         if (type === 2) {
-            sprite.frame = TEXTURES.Enemy2FaceLeft;
+            sprite.frameName = "Enemy2FaceLeft";
         }
-        flip = true;
-    } else if (oldY < sprite.y) {
-        sprite.frame = TEXTURES.Enemy1FaceDown;
+    } else if (oldY < newY) {
+        sprite.frameName = "Enemy1FaceDown";
         if (type === 2) {
-            sprite.frame = TEXTURES.Enemy2FaceDown;
+            sprite.frameName = "Enemy2FaceDown";
         }
-    } else if (oldY > sprite.y){
-        sprite.frame = TEXTURES.Enemy1FaceUp;
+    } else if (oldY > newY){
+        sprite.frameName = "Enemy1FaceUp";
         if (type === 2) {
-            sprite.frame = TEXTURES.Enemy2FaceUp;
+            sprite.frameName = "Enemy2FaceUp";
         }
     }
 
-    if (flip) {
-        sprite.anchor.setTo(1, 0);
-        sprite.scale.x = -SCALE;
-    } else {
-        sprite.anchor.setTo(0, 0);
-        sprite.scale.x = SCALE;
-    }
+    var tween = game.add.tween(sprite);
+    tween.to({ x: newX, y: newY }, 300);
+    tween.start();
 }
 
 function onEnemyDeath(name) {
@@ -294,14 +245,13 @@ function onEnemyDeath(name) {
 
 function onEnemyRespawn(name, type, coords) {
     enemies[name].sprite.visible = true;
-    enemies[name].sprite.x = coords.x * TILESIZE * SCALE + GAME_WORLD.offsetX;
-    enemies[name].sprite.y = coords.y * TILESIZE * SCALE + GAME_WORLD.offsetY;
-    console.log(enemies[name])
+    enemies[name].sprite.x = coords.x * TILESIZE + GAME_WORLD.offsetX;
+    enemies[name].sprite.y = coords.y * TILESIZE + GAME_WORLD.offsetY;
 }
 
 function onAddbomb(id, coords, timer) {
-    var sprite = addSprite(coords.x, coords.y, TEXTURES.Bomb0);
-    sprite.animations.add("bomb", [7, 8, 9, 10, 11, 12, 11, 10, 9, 8], 10, true);
+    var sprite = addSprite(coords.x, coords.y, "Bomb1");
+    sprite.animations.add("bomb", ["Bomb1", "Bomb2"], 10, true);
     sprite.play("bomb");
 
     var card;
@@ -346,8 +296,8 @@ function onBombExplosion(id, explodingTiles, explodingWalls) {
 
     // Add explosion animations
     explodingTiles.forEach(function(c) {
-        var sprite = addSprite(c.x, c.y, "explosion_1");
-        sprite.animations.add("explosion", ["explosion_1", "explosion_2", "explosion_3", "explosion_2", "explosion_1"]);
+        var sprite = addSprite(c.x, c.y, "ExplosionMiddle1");
+        sprite.animations.add("explosion", ["ExplosionMiddle1", "ExplosionMiddle2", "ExplosionMiddle3"]);
         sprite.play("explosion", 10, false, true);
     });
 }
@@ -381,7 +331,7 @@ function onEntityQueue(queue) {
 }
 
 function onAddPickup(id, coords, type) {
-    var sprite = addSprite(coords.x, coords.y, "pickup");
+    var sprite = addSprite(coords.x, coords.y, "Pickup");
 
     pickups[id] = {
         sprite: sprite,
@@ -394,12 +344,12 @@ function onDestroyPickup(id) {
 }
 
 function preload() {
-    game.load.atlas("bomber_atlas", "bomb_party_v4.png", "bomber_atlas.json");
+    game.load.atlas("sprites_atlas", "sprites.png", "sprites_atlas.json");
 }
 
 function create() {
     tilemap = game.add.tilemap();
-    tilemap.addTilesetImage("tiles", "bomber_atlas", TILESIZE, TILESIZE);
+    tilemap.addTilesetImage("tiles", "sprites_atlas", TILESIZE, TILESIZE);
 
     game.stage.setBackgroundColor(0xC0C0C0);
     game.stage.disableVisibilityChange = true;

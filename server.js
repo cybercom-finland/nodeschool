@@ -69,7 +69,7 @@ function onConnection(socket) {
             entityQueue.addEntity(player);
 
             // Send information to the visualizer
-            visualizer.addPlayer(player.name, player.coordinates);
+            visualizer.addPlayer(player.name, player.number, player.coordinates);
         } else {
             // This is an old player.
             // Do not allow multiple connections with a same name

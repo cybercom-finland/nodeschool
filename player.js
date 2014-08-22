@@ -3,9 +3,10 @@ var Entity = require("./entity.js");
 Player.prototype = Object.create(Entity.prototype);
 Player.prototype.constructor = Player;
 
-function Player(name, socket, world) {
+function Player(name, number, socket, world) {
     Entity.call(this, world);
     this.name = name;
+    this.number = number;
     this.socket = socket;
     this.connected = true;
     this.bombsDropped = 0;

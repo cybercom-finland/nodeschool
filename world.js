@@ -195,10 +195,11 @@ World.prototype.getStartPointForNewPlayer = function(name) {
 
 // Creates a new player and returns it
 World.prototype.addPlayer = function(name, socket) {
-    var player = new Player(name, socket, this);
+    this.playerCount++;
+
+    var player = new Player(name, this.playerCount, socket, this);
     player.coordinates = this.getStartPointForNewPlayer(name);
     this.players[name] = player;
-    this.playerCount++;
 
     return player;
 }
