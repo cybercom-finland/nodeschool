@@ -116,6 +116,11 @@
         },
 
         {
+            "filename": "Pickup",
+            "frame": {"x":128,"y":96,"w":32,"h":32}
+        },
+
+        {
             "filename": "Bomb1",
             "frame": {"x":0,"y":192,"w":32,"h":32}
         },
@@ -138,8 +143,81 @@
         },
 
         {
-            "filename": "Pickup",
-            "frame": {"x":128,"y":96,"w":32,"h":32}
+            "filename": "ExplosionVer1",
+            "frame": {"x":160,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionVer2",
+            "frame": {"x":160,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionVer3",
+            "frame": {"x":160,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionHor1",
+            "frame": {"x":192,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionHor2",
+            "frame": {"x":192,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionHor3",
+            "frame": {"x":192,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionDown1",
+            "frame": {"x":224,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionDown2",
+            "frame": {"x":224,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionDown3",
+            "frame": {"x":224,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionUp1",
+            "frame": {"x":256,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionUp2",
+            "frame": {"x":256,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionUp3",
+            "frame": {"x":256,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionRight1",
+            "frame": {"x":288,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionRight2",
+            "frame": {"x":288,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionRight3",
+            "frame": {"x":288,"y":64,"w":32,"h":32}
+        },
+
+        {
+            "filename": "ExplosionLeft1",
+            "frame": {"x":320,"y":0,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionLeft2",
+            "frame": {"x":320,"y":32,"w":32,"h":32}
+        },
+        {
+            "filename": "ExplosionLeft3",
+            "frame": {"x":320,"y":64,"w":32,"h":32}
         }
     ]
 }

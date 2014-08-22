@@ -12,12 +12,15 @@ var tilemap;
 // Tile size in pixels
 var TILESIZE = 32;
 
+var ROWS = 39;
+var COLUMNS = 19;
+
 // Game world coordinates to separate the actual game area from the background
 var GAME_WORLD = {
     offsetX: 20,
     offsetY: 72,
-    width: 39 * TILESIZE,
-    height: 19 * TILESIZE
+    width: ROWS * TILESIZE,
+    height: COLUMNS * TILESIZE
 };
 
 
@@ -294,12 +297,48 @@ function onBombExplosion(id, explodingTiles, explodingWalls) {
         tilemap.removeTile(c.x, c.y, "walls");
     });
 
-    // Add explosion animations
+    var explosions = new Array(COLUMNS * ROWS);
     explodingTiles.forEach(function(c) {
-        var sprite = addSprite(c.x, c.y, "ExplosionMiddle1");
-        sprite.animations.add("explosion", ["ExplosionMiddle1", "ExplosionMiddle2", "ExplosionMiddle3"]);
-        sprite.play("explosion", 10, false, true);
+        explosions[c.y * ROWS + c.x] = true;
     });
+
+    for (var j = 1; j < COLUMNS - 1; ++j) {
+        for (var i = 1; i < ROWS - 1; ++i) {
+            if (explosions[j * ROWS + i]) {
+                // Check whether the neighbor tiles are exploding
+                var up = explosions[(j - 1) * ROWS + i];
+                var down = explosions[(j + 1) * ROWS + i];
+                var left = explosions[j * ROWS + i - 1];
+                var right = explosions[j * ROWS + i + 1];
+
+                // Show explosion animations
+                var sprite = addSprite(i, j);
+                if ((up && down && left && right) ||
+                    (!up && down && left && right) ||
+                    (up && !down && left && right) ||
+                    (up && down && !left && right) ||
+                    (up && down && left && !right)) {
+                    sprite.animations.add("anim", ["ExplosionMiddle1", "ExplosionMiddle2", "ExplosionMiddle3"]);
+                } else {
+                    if (up && down) {
+                        sprite.animations.add("anim", ["ExplosionVer1", "ExplosionVer2", "ExplosionVer3"]);
+                    } else if (up) {
+                        sprite.animations.add("anim", ["ExplosionDown1", "ExplosionDown2", "ExplosionDown3"]);
+                    } else if (down) {
+                        sprite.animations.add("anim", ["ExplosionUp1", "ExplosionUp2", "ExplosionUp3"]);
+                    }
+                    if (left && right) {
+                        sprite.animations.add("anim", ["ExplosionHor1", "ExplosionHor2", "ExplosionHor3"]);
+                    } else if (left) {
+                        sprite.animations.add("anim", ["ExplosionRight1", "ExplosionRight2", "ExplosionRight3"]);
+                    } else if (right) {
+                        sprite.animations.add("anim", ["ExplosionLeft1", "ExplosionLeft2", "ExplosionLeft3"]);
+                    }
+                }
+                sprite.play("anim", 8, false, true);
+            }
+        }
+    }
 }
 
 function onEntityQueue(queue) {
