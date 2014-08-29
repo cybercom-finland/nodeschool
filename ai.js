@@ -1,27 +1,53 @@
-var Heap = require("heap");
+// The actual AI should be implemented in this file.
+//
+// In each turn, the function "handleTurn" is called. It should decide what the player character does and
+// return a string that represents the action. Possible actions are UP, DOWN, RIGHT, LEFT and BOMB.
+// The first four of them will move the character to a corresponding direction. The last one
+// will drop a bomb to a current tile. Only one action can be returned in a single turn.
+// The function must return an action within 5 seconds.
+//
+// The function "handleDeath" is called when the player dies. It is called just to inform the AI and
+// should not return any actions. When the player character respawns, the function "handleTurn" is
+// called.
+//
+// The variable "state" contains the current state of the game world:
+//
+// state.turn               Number
+// state.name               String
+// state.score              Number
+// state.coordinates.x      Number
+// state.coordinates.y      Number
+// state.bombsAvailable     Number
+// state.bombSize           Number
+// state.bombTimer          Number
+// state.worldWidth         Integer
+// state.worldHeight        Integer
 
-// Receives a message from the server
-process.on("message", function(data) {
-    if ("world" in data) {
-        // This message contains world state information
-        var action = handleTurn(data);
-        process.send(action);
-    } else {
-        // This message informs about player's death
-        handleDeath(data);
-    }
-});
+// The following four items are associative arrays:
+// state.players            Key: player name. Value: { coordinates, score }
+// state.enemies            Key: enemy name.  Value: { coordinates }
+// state.pickups            Key: pickup id.   Value: { coordinates, type }
+// state.bombs              Key: bomb id.     Value: { coordinates, timer, size }
+
+// state.world is a two-dimensional array of tiles (state.worldWidth x state.worldHeight). Each tile contains the following information:
+// tile.hardBlock           Boolean, true if the tile contains a hard block
+// tile.softBlock           Boolean, true if the tile contains a soft block
+// tile.playerName          The name of the human player that is in this tile. If there is no player, the value is null.
+// tile.enemyName           The name of the computer-controlled enemy that is in this tile. If there is no enemy, the value is null.
+// tile.pickupId            The id of the pickup that is in this tile. If there is no pickup, the value is null.
+// tile.bombId              The id of the bomb that is in this tile. If there is no bomb, the value is null.
+// tile.turnsToExplosion    The number of turns left until some bomb causes this tile to explode. The value is 0, if the tile is not going to explode.
 
 
-// The actual AI is implemented below
 
-var state; // Current world state
+///////////////////////////////////////////////////////////////////////////////
+// The following functions should be modified to implement the AI.           //
+///////////////////////////////////////////////////////////////////////////////
+
 var targetLocation; // Coordinates of the target tile that the player is trying to reach
 
-// Handles the current turn. Returns an action that the player does in this turn
-function handleTurn(data) {
+function handleTurn() {
     var action = "";
-    state = data;
 
     console.log("Thinking...");
 
@@ -116,12 +142,16 @@ function handleTurn(data) {
 }
 
 // Handles death
-function handleDeath(data) {
+function handleDeath() {
     // Nothing here...
 }
 
 
-// Helper functions are below
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper functions are below.                                               //
+// These can be freely modified.                                             //
+///////////////////////////////////////////////////////////////////////////////
 
 // Calculates how many empty tiles there are in different directions
 function calculateEmptyTiles(x, y) {
@@ -185,7 +215,7 @@ function isInside(x, y) {
     return !(x < 1 || x > state.worldWidth - 2 || y < 1 || y > state.worldHeight - 2);
 }
 
-// Checks whether a tile is free
+// Checks whether a tile is free i.e. does not contain walls, players, enemies or bombs
 function isFree(x, y) {
     if (!isInside(x, y)) {
         return false;
@@ -199,7 +229,7 @@ function isFree(x, y) {
            !tile.softBlock;
 }
 
-// Checks whether an enemy is near
+// Checks whether an enemy is in neighbor tiles
 function isEnemyNearby(x, y) {
     if (!isInside(x, y)) {
         return false;
@@ -211,7 +241,7 @@ function isEnemyNearby(x, y) {
              state.world[x][y + 1].enemyName === null);
 }
 
-// Checks whether a tile is free and safe for the next turn
+// Checks whether a tile is free and safe for the next turn i.e. there are no enemies in the neighbor tiles and the tile is not going to explode
 function isSafe(x, y) {
     if (!isInside(x, y)) {
         return false;
@@ -271,6 +301,7 @@ function getTargetLocation() {
 }
 
 // Returns a shortest path between two tiles
+var Heap = require("heap");
 function shortestPath(start, end) {
     if (start.x === end.x && start.y === end.y) {
         return [];
@@ -350,3 +381,25 @@ function shortestPath(start, end) {
 
     return [];
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// DO NOT MODIFY THE LINES BELOW                                             //
+///////////////////////////////////////////////////////////////////////////////
+
+var state; // Current world state
+
+// Receives a message from the server
+process.on("message", function(data) {
+    state = data;
+
+    if ("world" in data) {
+        // This message contains world state information
+        var action = handleTurn();
+        process.send(action);
+    } else {
+        // This message informs about player's death
+        handleDeath();
+    }
+});
